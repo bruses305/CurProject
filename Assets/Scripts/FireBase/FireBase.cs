@@ -8,6 +8,7 @@ using System;
 using System.Collections;
 using System.Runtime.CompilerServices;
 using NUnit.Framework.Internal;
+using Unity.VisualScripting;
 
 public class FireBase
 {
@@ -71,24 +72,28 @@ public class FireBase
 
     }
 
-    private async Task<List<DatabaseReference>> TestMetod<T>(DatabaseReference reference, Dictionary<string, T> fireBaseDataDictionary, string[] GroupNameDat, int idgr, bool addConditions = false, int addConditionsReference = 0) where T : IFireBaseData, new() {
+    private async Task<List<DatabaseReference>> ParsClassData<T>(DatabaseReference reference, Dictionary<string, T> fireBaseDataDictionary, string[] GroupNameDat, int idgr, bool addConditions = false, int addConditionsReference = 0) where T : IFireBaseData, new() {
         try
         {
             T t = new();
 
             List<DatabaseReference> referenceList = await GetChiledsAsync(reference, t.Key);
+            List<DatabaseReference> outReferenceList = new();
 
             if (referenceList.Count > 0)
             {
                 foreach (DatabaseReference childReference in referenceList)
                 {
-                    if (childReference.Key != GroupNameDat[idgr] && GroupNameDat[idgr] != null 
-                        && addConditions && int.Parse(childReference.Key) < addConditionsReference) { continue; }
+                    if (childReference.Key != GroupNameDat[idgr] && GroupNameDat[idgr] != null ||
+                        addConditions && int.Parse(childReference.Key) < addConditionsReference) { continue; }
+                    
+                    outReferenceList.Add(childReference);
                     t = new();
                     t.SetName(childReference.Key);
                     fireBaseDataDictionary[childReference.Key] = t;
+                        
                 }
-                return referenceList;
+                return outReferenceList;
             }
             else
             {
@@ -120,25 +125,31 @@ public class FireBase
                 };
 
                 Dictionary<string, Specialization> specializations = new();
-                List<DatabaseReference> specializationReferenceList = await TestMetod(facultyReference, specializations, GroupNameDat, 1); // 1 - специальность
+                List<DatabaseReference> specializationReferenceList = await ParsClassData(facultyReference, specializations, GroupNameDat, 1); // 1 - специальность
 
                 foreach (DatabaseReference specializationReference in specializationReferenceList)
                 {
                     Dictionary<string, Year> years = new();
-                    List<DatabaseReference> yearReferenceList = await TestMetod(specializationReference, years, GroupNameDat, 0, true, 25 - 3); // 0 - год  25 - текущий год
+                    List<DatabaseReference> yearReferenceList = await ParsClassData(specializationReference, years, GroupNameDat, 0, true, 25 - 3); // 0 - год  25 - текущий год
 
-                    Specialization specialization = specializations[specializationReference.Key];
+                    specializations.TryGetValue(specializationReference.Key, out Specialization specialization);
 
                     foreach (DatabaseReference yearReference in yearReferenceList)
                     {
-                        Dictionary<string, Group> groups = new();
-                        List<DatabaseReference> groupReferenceList = await TestMetod(specializationReference, groups, GroupNameDat, 2); // 2 - группа
+                        //if (int.Parse(yearReference.Key) < 25 - 3) { continue; }
 
-                        Year year = years[yearReference.Key];
+                        Dictionary<string, Group> groups = new();
+                        List<DatabaseReference> groupReferenceList = await ParsClassData(yearReference, groups, GroupNameDat, 2); // 2 - группа
+
+                        //if (int.Parse(yearReference.Key) < 25 - 3) { continue; }
+
+                        years.TryGetValue(yearReference.Key, out Year year);
 
                         foreach (DatabaseReference groupReference in groupReferenceList)
                         {
-                            Group group = groups[groupReference.Key];
+                            groups.TryGetValue(groupReference.Key, out Group group);
+
+                            if (group == null) { continue; }
                             //await GetChiledsAsync(groupReference,Dates.Key);   непон€тный код
 
                             List<DatabaseReference> dateReferenceList = GetDatesReference(groupReference, DateTime.Now - new TimeSpan(1, 0, 0, 0, 0), DateTime.Now);
@@ -362,18 +373,20 @@ public class FireBase
 
     #region Create
 
-    public async Task<bool> CreateGroup(string name, string idFaculty, string idSpecialization, string idYear) {
+    public async Task<bool> CreateGroup(string name, string idFaculty, string idSpecialization, string idYear, DatabaseReference groupReference = null) {
         try
         {
-
-
-            DatabaseReference reference_Group = reference.Child(Faculty.key).Child(idFaculty)
-                .Child(Specialization.key).Child(idSpecialization)
-                .Child(Year.key).Child(idYear)
-                .Child(Group.key);
-
+            DatabaseReference reference_Group;
+            if (groupReference != null) reference_Group = groupReference;
+            else
+            {
+                reference_Group = reference.Child(Faculty.key).Child(idFaculty)
+                    .Child(Specialization.key).Child(idSpecialization)
+                    .Child(Year.key).Child(idYear)
+                    .Child(Group.key);
+            }
             int countChiled = await ChildCount(reference_Group);
-            DatabaseReference newFaculty = reference_Group.Child(Group.key + countChiled);
+            DatabaseReference newFaculty = reference_Group.Child(name);
             await UpdateData(newFaculty, Group.Key_NAME, name);
 
             return true;
@@ -455,13 +468,20 @@ public class FireBase
     }
     #endregion
 
-    public async void DeliteGroup(string name) {
+    public async Task DeliteGroup(string name, DatabaseReference groupReference = null) {
 
         try
         {
+            DatabaseReference group;
+            if (groupReference != null) group = groupReference;
+            else group = await SearchGroupReference(name);
+
             Debug.Log(name + " DeliteGroup");
-            DatabaseReference group = await SearchGroupReference(name);
-            await group.RemoveValueAsync();
+            List<DatabaseReference> childReferenceGroup = await GetChiledsAsync(group.Parent, group.Key);
+            foreach (var item in childReferenceGroup)
+            {
+                await item.RemoveValueAsync();
+            }
 
         }
         catch (Exception ex)

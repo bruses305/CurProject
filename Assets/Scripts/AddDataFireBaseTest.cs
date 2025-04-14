@@ -9,7 +9,7 @@ public class AddDataFireBaseTest : MonoBehaviour
 {
     private FireBase fireBase = new();
     private void Start() {
-        //fireBase.Initialized();
+        fireBase.Initialized();
     }
     public void Upload() {
         UploadingDataFireBase();
@@ -79,13 +79,16 @@ public class AddDataFireBaseTest : MonoBehaviour
             HtmlNode facultyNameNode;
             if (i == 0)
             {
-                i++;
                 facultyNameNode = node.SelectNodes(".//td")[1];
+                Debug.Log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" + facultyNameNode);
             }
             else
             {
                 facultyNameNode = node.SelectNodes(".//td")[0];
+                Debug.Log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" + facultyNameNode);
             }
+            if (i > 3) { continue; }
+            i++;
             specializa.Name = facultyNameNode.InnerText;
             HtmlNodeCollection specNodes = node.SelectNodes(".//a[@href]");
             Debug.Log("a" + specNodes.Count);

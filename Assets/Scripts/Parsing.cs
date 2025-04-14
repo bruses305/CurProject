@@ -48,14 +48,14 @@ public class Parsing : MonoBehaviour
         Debug.Log("All Parsing Web Site");
         AllParsing();
     }
-    private async Task<T> TimeTrigger<T>(Task<T> task) {
+    private async Task<T> TimeTrigger<T>(Task<T> task, float timeOut = 10f) {
         CancellationTokenSource cancelTokenSource = new CancellationTokenSource();
 
         var fieldInfo = typeof(Task<T>).GetField("m_action", BindingFlags.NonPublic | BindingFlags.Instance);
         var value = fieldInfo.GetValue(task);
 
 
-        Coroutine corotine = StartCoroutine(ResourceTickOver(cancelTokenSource, task.ToString()));
+        Coroutine corotine = StartCoroutine(ResourceTickOver(cancelTokenSource, task.ToString(), timeOut));
         T Data = default(T);
 
         try
@@ -202,7 +202,6 @@ public class Parsing : MonoBehaviour
                     {
                         using (HttpResponseMessage resp = await client.GetAsync(POLESSU_URL_TYPE_2 + GroupAndDate))
                         {
-                            Debug.Log(POLESSU_URL_TYPE_2 + GroupAndDate);
                             if (resp.IsSuccessStatusCode)
                             {
 
