@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "343576320224",
+    "firebase_url": "https://curproject-1f706-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "curproject-1f706",
+    "storage_bucket": "curproject-1f706.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:343576320224:android:e113a91ccda338a1779885",
+        "android_client_info": {
+          "package_name": "com.DefaultCompany.CurProject"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBQ_WebyyaErnDmzGmUDeCdf3Ci62BahHY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
