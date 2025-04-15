@@ -6,29 +6,24 @@ using System.Net.Http;
 using System;
 using System.Threading.Tasks;
 using System.Collections;
-using Unity.VisualScripting;
 using System.Threading;
 using System.Reflection;
-using Unity.VisualScripting.Antlr3.Runtime;
+using Firebase.Database;
 
 public class Parsing : MonoBehaviour
 {
     public FireBase fireBase = new();
     public event EventHandler PageEvent;
-    public static int Page = -1;
-    public List<GroupParsing> ParsingData1 { get; set; }
-    public GroupParsing ParsingData2 { get; set; }
+    public static Dictionary<string, GroupParsing> ParsingData1 = new();
+    private GroupParsing ParsingDataDefould { get; set; }
 
 
     private const int FAIL_LIMIT = 5;
-    private const string POLESSU_URL_TYPE_1 = "https://www.polessu.by/ruz/term2ng/students.html";
     private const string POLESSU_URL_TYPE_2 = "https://www.polessu.by/ruz/ng/?";
-    private const string POLESSU_FILE1 = ".//table[@id]";
     private const string POLESSU_FILE2 = ".//div[@class='container']";
     private const string GroupNamePlayerPrefs = "GROUP_NAME";
     public static string parsingGroupName = "22ИТ-3";
     private DateTime dateTime_Now = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day);
-    private DateTime dateTime = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day);
 
 
     private async void Awake() {
@@ -38,7 +33,7 @@ public class Parsing : MonoBehaviour
             PlayerPrefs.SetString(GroupNamePlayerPrefs, parsingGroupName);
         fireBase.Initialized();
 
-        await LoadingAllData();
+        await LoadingDefouldData();
     }
     private void Start() {
         fireBase.ParsingFireBaseEnd += ParsingWebSite;
@@ -72,23 +67,22 @@ public class Parsing : MonoBehaviour
         return Data;
     }
     public async void ButtonEventLoadingAllData() {
-        await LoadingAllData();
+        await Task.Run(fireBase.LoadingAllData);
     }
-    private async Task LoadingAllData() {
+    private async Task LoadingDefouldData(string parsGroupName = null) {
         int countParsingFail = 0;
+        if(parsGroupName != null) parsingGroupName = parsGroupName;
         do
         {
-            Debug.Log("StartParsing");
-            bool FB = await TimeTrigger(fireBase.LoadingData());  //нужно реализовать чтобы данные о пройденных занятиях подключались к GroupParsing2 а потом и к GroupParssing1 при полном парсинге
+            Debug.Log("StartDefouldParsing");
+            bool FB = await TimeTrigger(fireBase.LoadingData(parsingGroupName));  //нужно реализовать чтобы данные о пройденных занятиях подключались к GroupParsing2 а потом и к GroupParssing1 при полном парсинге
             if (FB)
             {
-                ParsingData2 = await TimeTrigger(ParsingMetod2(parsingGroupName));
-                if (ParsingData2 != default(GroupParsing))
+                ParsingDataDefould = await TimeTrigger(ParsingMetod(parsingGroupName,true));
+                if (ParsingDataDefould != default(GroupParsing))
                 {
-
-                    Debug.Log("DataLoading");
-                    PageEvent.Invoke(this, EventArgs.Empty);
-                    await Task.Run(fireBase.LoadingAllData);
+                    ParsingData1[parsingGroupName].MergingObjectDate(ParsingDataDefould.dateParses);
+                    PageEvent.Invoke(this, EventArgs.Empty);  // вызов инвента на обновление таблицы
                     //ивент на закрытие загрузочного экрана
                     return;
                 }
@@ -102,26 +96,11 @@ public class Parsing : MonoBehaviour
 
     }
     public void LastPage() {
-        if (Page > 0)
-        {
-            Page--;
-            PageEvent.Invoke(this, EventArgs.Empty);
-        }
+        
     }
     public void NextPage() {
-        if (Page >= 0 && Page < ParsingData1.Count-1)
-        {
-            Page++;
-            PageEvent.Invoke(this, EventArgs.Empty);
-        }
-        else if(Page == -1 && ParsingData1 != null)
-        {
-            Page = 1;
-            PageEvent.Invoke(this, EventArgs.Empty);
-        }
+        
     }
-
-
     private async void AllParsing() {
         List<string> GroupName = new();
         foreach (var faculty in FireBase.fireBaseData.Faculties)
@@ -141,18 +120,17 @@ public class Parsing : MonoBehaviour
             }
         }
         Debug.Log("GroupName" + GroupName.Count);
-        Page = GroupName.FindIndex(obj=> obj== parsingGroupName);
-        ParsingData1 = new();
+        bool isUpdate = await fireBase.isUpdate();
         foreach (string groupName in GroupName)
         {
-            GroupParsing groupParsing = await ParsingMetod2(groupName);
-            if(groupParsing!=null) ParsingData1.Add(groupParsing);
+            GroupParsing groupParsing = await ParsingMetod(groupName, isUpdate);
+            if(groupParsing!=null) ParsingData1[groupName]= groupParsing;
         }
 
         Debug.Log("ParsingData1 CountGroup Parsing: " + ParsingData1.Count);
     }
 
-    private async Task<GroupParsing> ParsingMetod2(string GroupName) {
+    private async Task<GroupParsing> ParsingMetod(string GroupName, bool updateData) {
         GroupParsing groupParsing = new();
         groupParsing.Name = GroupName;
 
@@ -180,7 +158,7 @@ public class Parsing : MonoBehaviour
                                 var tables = document.DocumentNode.SelectSingleNode(POLESSU_FILE2);
                                 try
                                 {
-                                    (await WorkingTabelsType2(tables, groupParsing.Name)).ForEach(groupParsing.dateParses.Add);
+                                    (await WorkingTabelsType2(tables, groupParsing.Name, updateData)).ForEach(groupParsing.dateParses.Add);
                                 }
                                 catch
                                 {
@@ -204,7 +182,7 @@ public class Parsing : MonoBehaviour
         return null;
     }
 
-    private List<string> ConvertToCollectionString(HtmlNodeCollection htmlNode, List<int> DontConvert = null ) {
+    private List<string> ConvertToCollectionString(IList<HtmlNode> htmlNode, List<int> DontConvert = null ) {
         List<string> HTMLInnerText = new();
         for(int i = 0; i < htmlNode.Count; i++)
         {
@@ -215,59 +193,10 @@ public class Parsing : MonoBehaviour
         }
         return HTMLInnerText;
     }
-
-    private HtmlNodeCollection SelectOnName(HtmlNodeCollection htmlNodes, HtmlNode parent, string name) {
-        HtmlNodeCollection htmlNodesReturn = new HtmlNodeCollection(parent);
-        foreach (var item in htmlNodes)
-        {
-            if (item.Name == name)
-                htmlNodesReturn.Add(item);
-        }
-        return htmlNodesReturn;
-    }
-
-    private HtmlNodeCollection SelectOnNameParent(HtmlNodeCollection htmlNodes, int idChild) {
-        HtmlNodeCollection htmlNodesReturn = htmlNodes;
-        for (int i = htmlNodes[idChild].ChildNodes.Count - 1; i >= 0; i--)
-        {
-            var ChildNode = htmlNodes[idChild].ChildNodes[i];
-            if (ChildNode.Name != "td")
-            {
-                htmlNodesReturn[idChild].ChildNodes.Remove(htmlNodesReturn[idChild].ChildNodes[i]);
-            }
-        }
-
-        return htmlNodesReturn;
-    }
-
-    private HtmlNodeCollection RowspanOnID(HtmlNodeCollection htmlNodes, int idCell, int idStr, int CountLection) {
-        if (CountLection == 3) { return htmlNodes; }
-        for (int i = 1; i < CountLection; i++)
-        {
-            htmlNodes = SelectOnNameParent(htmlNodes, idStr + i);
-
-            var parentNode = htmlNodes[idStr + i];
-
-            if (parentNode.ChildNodes.Count > idCell) // Проверка, чтобы не выйти за пределы
-            {
-                parentNode.ChildNodes.Insert(idCell, htmlNodes[idStr].ChildNodes[idCell].CloneNode(true)); // Клонируем узел перед вставкой
-            }
-            else
-            {
-                parentNode.ChildNodes.Add(htmlNodes[idStr].ChildNodes[idCell].CloneNode(true)); // Добавляем в конец, если индекс выходит за пределы
-            }
-
-            parentNode.ChildNodes[idCell].Name = "td";
-
-
-        }
-        return htmlNodes;
-    }
-
-
-    private async Task<List<DateParse>> WorkingTabelsType2(HtmlNode table, string groupName) {
+    private async Task<List<DateParse>> WorkingTabelsType2(HtmlNode table, string groupName, bool updateData) {
         List<DateParse> dateParses = new();
-        
+        DatabaseReference referenceGroup = !updateData? null:await fireBase.SearchGroupReference(groupName);
+        Debug.Log(groupName);
         if (table != null)
         {
 
@@ -290,18 +219,30 @@ public class Parsing : MonoBehaviour
                 {
                     for (int DateID = 0; DateID + NodesAdd < DateNodes.Count; DateID++)
                     {
-                        HtmlNodeCollection LessonsNodes = DateNodes[DateID + NodesAdd].SelectNodes(".//span[@class='acty-subjects']");
-                        HtmlNodeCollection LessonsTypeNodes = DateNodes[DateID + NodesAdd].SelectNodes(".//span[@class='badge acty-tags acty-tag-lab']");
-                        if (LessonsNodes != null && LessonsNodes.Count > 0)
+                        HtmlNodeCollection LessonsNodes = DateNodes[DateID + NodesAdd].SelectNodes(".//div[@class='acty-item clearfix']");
+                        List<HtmlNode> LessonNodes = new();
+                        List<HtmlNode> LessonsTypeNodes = new();
+                        foreach (var LessonsNode in LessonsNodes)
                         {
-                            List<string> LessonsName = ConvertToCollectionString(LessonsNodes);
+                            LessonNodes.Add(LessonsNode.SelectSingleNode(".//span[@class='acty-subjects']"));
 
-                            List<LessonFireBase.TypeLesson> LessonsType = new();
-                            ConvertToCollectionString(LessonsTypeNodes).ForEach(obj => LessonsType.Add(LessonFireBase.isTypeLesson(obj)));
-                            if (LessonsType.Count == LessonsName.Count) { Debug.Log(dateParses[DateID].dateTime + " UpdateDateLesson");
-                                await fireBase.CreateLesson(LessonsName, LessonsType, dateParses[DateID].dateTime, groupName);
+                            if(LessonsNode.SelectSingleNode(".//span[@title]") == null)
+                                LessonsTypeNodes.Add(LessonsNode.SelectSingleNode(".//span[@class='acty-subjects']"));
+                            else
+                                LessonsTypeNodes.Add(LessonsNode.SelectSingleNode(".//span[@title]"));
+                        }
+
+                        if (LessonNodes != null && LessonNodes.Count > 0)
+                        {
+                            List<string> LessonsName = ConvertToCollectionString(LessonNodes);
+                            if (updateData) {
+                                List<LessonFireBase.TypeLesson> LessonsType = new();
+                                ConvertToCollectionString(LessonsTypeNodes).ForEach(obj => LessonsType.Add(LessonFireBase.isTypeLesson(obj)));
+
+                                if (LessonsType.Count == LessonsName.Count) {
+                                    await fireBase.CreateLesson(LessonsName, LessonsType, dateParses[DateID].dateTime, referenceGroup);
+                                }
                             }
-
                             LessonsName.ForEach(obj => dateParses[DateID].Lessons.Add(obj));
                         }
                         else

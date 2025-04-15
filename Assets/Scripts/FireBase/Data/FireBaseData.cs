@@ -7,6 +7,9 @@ public class FireBaseData
 {
     public const string Key_ADMINISTRATION = "Administrations";
     public const string Key_UUID = "UUID";
+    public const string Key_CONNECTION = "Connection";
+    public const string Key_UPDATEALL = "UpdateAll";
+    public const string Key_TEST = "Test";
     public bool IsAdministration { get; set; }
 
     public List<string> NameGroupAdministration = new();

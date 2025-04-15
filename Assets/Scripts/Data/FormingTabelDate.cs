@@ -5,6 +5,8 @@ using UnityEngine;
 using TMPro;
 using System;
 using System.Linq;
+using UnityEngine.Tilemaps;
+using System.Threading.Tasks;
 
 public class FormingTabelDate : MonoBehaviour
 {
@@ -17,17 +19,13 @@ public class FormingTabelDate : MonoBehaviour
     }
 
     private void EventFormingTable(object sender, EventArgs e) {
-        FormingTable();
+        FormingTable(Parsing.parsingGroupName);
     }
 
-    public void FormingTable(int Page = -1) {
-        if (Page <0) Page = Parsing.Page;
-        Debug.Log("Page Number: " + Page);
-        GroupParsing groupParsing;
-        if (Page < 0) groupParsing = parsing.ParsingData2;
-        else groupParsing = parsing.ParsingData1[Page];
+    public void FormingTable(string groupNameForming) {
+        GroupParsing groupParsing = Parsing.ParsingData1[groupNameForming];
 
-
+        Debug.Log("Count Data in group: " + groupParsing.dateParses.Count);
         //TableObjectData.FormingTableCell(LoadingDataFireBase.StrudentName[Page].Count, Converter(groupParsing));
 
 
@@ -61,7 +59,6 @@ public class FormingTabelDate : MonoBehaviour
         if (!groupName_ContainsKey) {return; }
 
         Group group = FireBase.fireBaseData.Faculties[FacultyNameID].Specializations[specializationName].Years[yearName].Groups[groupName];
-        Debug.Log(group.Students.Count);
         if (groupName_ContainsKey)
         {
             if (tableTextCell.TablePersonCell.Count != group.Students.Count)
@@ -111,15 +108,22 @@ public class FormingTabelDate : MonoBehaviour
             if (GroupName == null) return new string[3] { null, null, null };
             int yearName = Convert.ToInt32(GroupName.Substring(0, 2));
             int index = GroupName.IndexOf('-');
-            string specializationName = GroupName.Substring(2, index - 2);
-            string groupName = GroupName.Substring(index + 1);
-
-            if (yearName == 0 || specializationName == null || groupName == null) return null;
-
-            return new string[3] { yearName.ToString(),specializationName,groupName};
+            string specializationName;
+            string groupName = null;
+            if (index >= 2)
+            {
+                specializationName = GroupName.Substring(2, index - 2);
+                groupName = GroupName.Substring(index + 1);
+            }
+            else
+            {
+                specializationName = GroupName.Substring(2);
+            }
+            return new string[3] { yearName.ToString(), specializationName, groupName };
         }
-        catch {
-            return null;
+        catch
+        {
+            return new string[3] { null, null, null };
         }
     }
     private TypeCellN SerchStudentCell(Group group, GroupParsing groupParsing, int idDate, int idColumn, int idCell) {
