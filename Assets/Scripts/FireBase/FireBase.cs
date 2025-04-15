@@ -9,6 +9,8 @@ using System.Collections;
 using System.Runtime.CompilerServices;
 using NUnit.Framework.Internal;
 using Unity.VisualScripting;
+using System.Xml.Linq;
+using UnityEditor.Experimental.GraphView;
 
 public class FireBase
 {
@@ -357,11 +359,12 @@ public class FireBase
             return null;
         }
     }
-    private async Task<List<DatabaseReference>> GetChiledsAsync(DatabaseReference reference, string key) {
+    private async Task<List<DatabaseReference>> GetChiledsAsync(DatabaseReference reference, string key = null) {
         try
         {
-            DatabaseReference chiledReference = reference.Child(key);
-            return await ReadReferenceEnum(chiledReference);
+            if(key!= null)
+                reference = reference.Child(key);
+            return await ReadReferenceEnum(reference);
         }
         catch
         {
@@ -397,20 +400,55 @@ public class FireBase
             return false;
         }
     }
-    public async Task<bool> CreateLesson(string name, LessonFireBase.TypeLesson type, string date, string idFaculty, int idSpecialization, int idYear, int idGroup) {
+    public async Task<bool> CreateLesson(List<string> names, List<LessonFireBase.TypeLesson> types, string date, string groupName) {
         try
         {
 
-            DatabaseReference reference_Lesson = reference.Child(Faculty.key).Child(idFaculty)
-                .Child(Specialization.key).Child(Specialization.key + idSpecialization)
-                .Child(Year.key).Child(Year.key + idYear)
-                .Child(Group.key).Child(Group.key + idGroup)
+            DatabaseReference reference_Lesson = (await SearchGroupReference(groupName))
                 .Child(Dates.Key).Child(date)
                 .Child(LessonFireBase.Key);
-            int countChiled = await ChildCount(reference_Lesson);
-            DatabaseReference newFaculty = reference_Lesson.Child(LessonFireBase.Key + countChiled);
-            await UpdateData(newFaculty, LessonFireBase.Key_NAME, name);
-            await UpdateData(newFaculty, LessonFireBase.Key_TYPE, LessonFireBase.ConvertToString(type));
+
+            Debug.Log("Tesssssssssssssssst2");
+            List<DatabaseReference> AllLesson = await GetChiledsAsync(reference_Lesson);
+            for (int i = 0;i <= AllLesson.Count; i++)
+            {
+                Debug.Log("Tesssssssssssssssst1");
+                if (i == AllLesson.Count)
+                {
+                    for (; i < names.Count; i++)
+                    {
+                        DatabaseReference newLesson = reference_Lesson.Child(LessonFireBase.Key + i);
+
+                        await UpdateData(newLesson, LessonFireBase.Key_NAME, names[i]);
+                        await UpdateData(newLesson, LessonFireBase.Key_TYPE, LessonFireBase.ConvertToString(types[i]));
+                    }
+                    break;
+                }
+
+                DatabaseReference lesson = AllLesson[i];
+
+                if (i == names.Count)
+                {
+                    for (; i < AllLesson.Count; i++)
+                    {
+                        await DeliteLesson(lesson);
+                    }
+                    break;
+                }
+
+                bool isNewLesson = await ChildCount(lesson) == 0;
+
+                if (isNewLesson)
+                {
+                    await DeliteLesson(lesson);
+
+                    DatabaseReference newLesson = reference_Lesson.Child(LessonFireBase.Key + i);
+                    await UpdateData(newLesson, LessonFireBase.Key_NAME, names[i]);
+                    await UpdateData(newLesson, LessonFireBase.Key_TYPE, LessonFireBase.ConvertToString(types[i]));
+                }
+                
+                
+            }
 
             return true;
         }
@@ -446,6 +484,7 @@ public class FireBase
     public async Task<bool> CreateStudent(string name, string idFaculty, int idSpecialization, int idYear, int idGroup) {
         try
         {
+            DatabaseReference group = await SearchGroupReference(name);
             DatabaseReference reference_Student = reference.Child(Faculty.key).Child(idFaculty)
                 .Child(Specialization.key).Child(Specialization.key + idSpecialization)
                 .Child(Year.key).Child(Year.key + idYear)
@@ -468,7 +507,32 @@ public class FireBase
     }
     #endregion
 
-    public async Task DeliteGroup(string name, DatabaseReference groupReference = null) {
+    private async Task DeliteLesson(DatabaseReference lessonReference) {
+        try
+        {
+            Debug.Log(lessonReference.Child("Name") + " DeliteLesson");
+            List<DatabaseReference> childReferenceGroup = await GetChiledsAsync(lessonReference);
+            foreach (var item in childReferenceGroup)
+            {
+                if(item.Key == StudentMissing.Key)
+                {
+                    List<DatabaseReference> childReferenceStudentMissing = await GetChiledsAsync(item, StudentMissing.Key);
+                    foreach (var itemStudent in childReferenceGroup)
+                    {
+                        await itemStudent.RemoveValueAsync();
+                    }
+                }
+                else
+                    await item.RemoveValueAsync();
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError(ex.Message);
+        }
+    }
+    private async Task DeliteGroup(string name, DatabaseReference groupReference = null) {
 
         try
         {
@@ -498,21 +562,16 @@ public class FireBase
 
         foreach (var facultyReference in facultyReferenceList)
         {
-            List<DatabaseReference> specializationReferenceList = await GetChiledsAsync(reference, Faculty.key);
-            foreach (var specializationReference in specializationReferenceList)
-            {
-                if (specializationReference.Key == groupData[1])
+            DatabaseReference specializationReference = facultyReference.Child(Specialization.key).Child(groupData[1]);
+
+                List<DatabaseReference> GroupReferenceList = await GetChiledsAsync(specializationReference.Child(Year.key).Child(groupData[0]), Group.key);
+                foreach (var GroupReference in GroupReferenceList)
                 {
-                    List<DatabaseReference> GroupReferenceList = await GetChiledsAsync(specializationReference.Child(Year.key).Child(groupData[0]), Group.key);
-                    foreach (var GroupReference in GroupReferenceList)
+                    if ((await ReadValue(GroupReference.Child(Group.Key_NAME))).ToString() == groupData[2])
                     {
-                        if((await ReadValue(GroupReference.Child(Group.Key_NAME))).ToString() == groupData[2])
-                        {
-                            return GroupReference;
-                        }
+                        return GroupReference;
                     }
                 }
-            }
         }
 
         return null;

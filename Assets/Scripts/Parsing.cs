@@ -79,13 +79,13 @@ public class Parsing : MonoBehaviour
         do
         {
             Debug.Log("StartParsing");
-
-            ParsingData2 = await TimeTrigger(ParsingMetod2(parsingGroupName));
-            if (ParsingData2 != default(GroupParsing))
+            bool FB = await TimeTrigger(fireBase.LoadingData());  //нужно реализовать чтобы данные о пройденных зан€ти€х подключались к GroupParsing2 а потом и к GroupParssing1 при полном парсинге
+            if (FB)
             {
-                bool FB = await TimeTrigger(fireBase.LoadingData());
-                if (FB)
+                ParsingData2 = await TimeTrigger(ParsingMetod2(parsingGroupName));
+                if (ParsingData2 != default(GroupParsing))
                 {
+
                     Debug.Log("DataLoading");
                     PageEvent.Invoke(this, EventArgs.Empty);
                     await Task.Run(fireBase.LoadingAllData);
@@ -156,79 +156,44 @@ public class Parsing : MonoBehaviour
         GroupParsing groupParsing = new();
         groupParsing.Name = GroupName;
 
-        List<string> GroupAndDates = new();
-
-
-        /*dateTime = dateTime_Now.Subtract(new TimeSpan(21, 0, 0, 0));
-        if (dateTime.Month == dateTime_Now.Month)
-        {
-            string datePars_Last_3 = dateTime.Year + "-" + dateTime.Month + "-" + dateTime.Day;
-            string GroupAndDate_3 = "group=" + GroupName + "&day=" + datePars_Last_3;
-
-            GroupAndDates.Add(GroupAndDate_3);
-        }
-
-        dateTime = dateTime_Now.Subtract(new TimeSpan(14, 0, 0, 0));
-        if (dateTime.Month == dateTime_Now.Month && dateTime.DayOfWeek != DayOfWeek.Sunday)
-        {
-            string datePars_Last_2 = dateTime_Now.Year + "-" + dateTime_Now.Month + "-" + dateTime.Day;
-            string GroupAndDate_2 = "group=" + GroupName + "&day=" + datePars_Last_2;
-
-            GroupAndDates.Add(GroupAndDate_2);
-        }
-
-        dateTime = dateTime_Now.Subtract(new TimeSpan(7, 0, 0, 0));
-        if (dateTime.Month == dateTime_Now.Month)
-        {
-            string datePars_Last_1 = dateTime.Year + "-" + dateTime.Month + "-" + dateTime.Day;
-            string GroupAndDate_1 = "group=" + GroupName + "&day=" + datePars_Last_1;
-
-            GroupAndDates.Add(GroupAndDate_1);
-        }*/
-
         string datePars_Now = dateTime_Now.Year + "-" + dateTime_Now.Month + "-" + dateTime_Now.Day;
-        string GroupAndDate_0 = "group=" + GroupName + "&day=" + datePars_Now;
-
-        GroupAndDates.Add(GroupAndDate_0);
+        string GroupAndDate = "group=" + GroupName + "&day=" + datePars_Now;
 
         try
         {
-
-            foreach (string GroupAndDate in GroupAndDates)
+            using (HttpClientHandler hdl = new HttpClientHandler { AllowAutoRedirect = false, AutomaticDecompression = System.Net.DecompressionMethods.Deflate | System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.None })
             {
-                using (HttpClientHandler hdl = new HttpClientHandler { AllowAutoRedirect = false, AutomaticDecompression = System.Net.DecompressionMethods.Deflate | System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.None })
+                using (var client = new HttpClient(hdl))
                 {
-                    using (var client = new HttpClient(hdl))
+                    using (HttpResponseMessage resp = await client.GetAsync(POLESSU_URL_TYPE_2 + GroupAndDate))
                     {
-                        using (HttpResponseMessage resp = await client.GetAsync(POLESSU_URL_TYPE_2 + GroupAndDate))
+                        if (resp.IsSuccessStatusCode)
                         {
-                            if (resp.IsSuccessStatusCode)
+
+                            var html = resp.Content.ReadAsStringAsync().Result;
+
+                            if (!string.IsNullOrEmpty(html))
                             {
+                                HtmlAgilityPack.HtmlDocument document = new HtmlAgilityPack.HtmlDocument();
+                                document.LoadHtml(html);
 
-                                var html = resp.Content.ReadAsStringAsync().Result;
-
-                                if (!string.IsNullOrEmpty(html))
+                                var tables = document.DocumentNode.SelectSingleNode(POLESSU_FILE2);
+                                try
                                 {
-                                    HtmlAgilityPack.HtmlDocument document = new HtmlAgilityPack.HtmlDocument();
-                                    document.LoadHtml(html);
-
-                                    var tables = document.DocumentNode.SelectSingleNode(POLESSU_FILE2);
-                                    try
-                                    {
-                                        WorkingTabelsType2(tables).dateParses.ForEach(groupParsing.dateParses.Add);
-                                    }
-                                    catch
-                                    {
-                                        continue;
-                                    }
-
+                                    (await WorkingTabelsType2(tables, groupParsing.Name)).ForEach(groupParsing.dateParses.Add);
                                 }
+                                catch
+                                {
+                                    Debug.LogWarning("Data ParsingMetod2 WorkingTabelsType2 not foundit");
+                                }
+
                             }
                         }
                     }
                 }
             }
-            if(groupParsing.dateParses.Count>0) return groupParsing;
+
+            if (groupParsing.dateParses.Count > 0) return groupParsing;
             return null;
         }
         catch (Exception e)
@@ -300,10 +265,8 @@ public class Parsing : MonoBehaviour
     }
 
 
-
-
-    private GroupParsing WorkingTabelsType2(HtmlNode table) {
-        GroupParsing GroupData = new();
+    private async Task<List<DateParse>> WorkingTabelsType2(HtmlNode table, string groupName) {
+        List<DateParse> dateParses = new();
         
         if (table != null)
         {
@@ -312,28 +275,40 @@ public class Parsing : MonoBehaviour
             if (dateNodesName != null && dateNodesName.Count > 1)
             {
                 List<string> DateNodesName = ConvertToCollectionString(dateNodesName, new() {0}); // сохран€ет даты на которые стоит расписание
-
-                DateNodesName.ForEach(obj => GroupData.dateParses.Add(new DateParse { dateTime = obj }));
+                int NodesAdd = int.MaxValue;
+                for (int i = 0;i< DateNodesName.Count;i++)
+                {
+                    DateTime timeLesson = ConvertStringToDateTime(DateNodesName[i]);
+                    if (NodesAdd == int.MaxValue && (timeLesson.Day >= DateTime.Now.Day || timeLesson.Month > DateTime.Now.Month))
+                        NodesAdd = i;
+                    if (timeLesson.Day >= DateTime.Now.Day || timeLesson.Month > DateTime.Now.Month)
+                        dateParses.Add(new DateParse { dateTime = (timeLesson.Day + "-" + timeLesson.Month + "-" + timeLesson.Year) });
+                }
 
                 HtmlNodeCollection DateNodes = table.SelectNodes(".//div[@class='row acty-group']"); // все строки tbody
                 if (DateNodes != null && DateNodes.Count > 0)
                 {
-                    for (int DateID = 0; DateID < DateNodes.Count; DateID++)
+                    for (int DateID = 0; DateID + NodesAdd < DateNodes.Count; DateID++)
                     {
-                        HtmlNodeCollection LessonsNodes = DateNodes[DateID].SelectNodes(".//span[@class='acty-subjects']");
+                        HtmlNodeCollection LessonsNodes = DateNodes[DateID + NodesAdd].SelectNodes(".//span[@class='acty-subjects']");
+                        HtmlNodeCollection LessonsTypeNodes = DateNodes[DateID + NodesAdd].SelectNodes(".//span[@class='badge acty-tags acty-tag-lab']");
                         if (LessonsNodes != null && LessonsNodes.Count > 0)
                         {
                             List<string> LessonsName = ConvertToCollectionString(LessonsNodes);
 
-                            LessonsName.ForEach(obj => GroupData.dateParses[DateID].Lessons.Add(obj));
+                            List<LessonFireBase.TypeLesson> LessonsType = new();
+                            ConvertToCollectionString(LessonsTypeNodes).ForEach(obj => LessonsType.Add(LessonFireBase.isTypeLesson(obj)));
+                            if (LessonsType.Count == LessonsName.Count) { Debug.Log(dateParses[DateID].dateTime + " UpdateDateLesson");
+                                await fireBase.CreateLesson(LessonsName, LessonsType, dateParses[DateID].dateTime, groupName);
+                            }
+
+                            LessonsName.ForEach(obj => dateParses[DateID].Lessons.Add(obj));
                         }
                         else
                         {
                             Debug.Log($"«ан€тий на {DateID} нету");
                         }
                     }
-
-                    return GroupData;
                 }
                 else
                 {
@@ -351,9 +326,13 @@ public class Parsing : MonoBehaviour
             Debug.LogWarning("Ќет результата");
         }
 
-        return null;
+        return dateParses;
     }
+    private DateTime ConvertStringToDateTime(string data) {
 
+        DateTime.TryParseExact(data, "d.M", null, System.Globalization.DateTimeStyles.None, out DateTime time);
+        return time;
+    }
     IEnumerator ResourceTickOver(CancellationTokenSource token, string taskType = "", float waitTime = 10) {
         yield return new WaitForSeconds(waitTime);
         if (token.IsCancellationRequested !=true)

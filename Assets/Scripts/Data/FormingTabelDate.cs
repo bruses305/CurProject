@@ -29,21 +29,22 @@ public class FormingTabelDate : MonoBehaviour
 
 
         //TableObjectData.FormingTableCell(LoadingDataFireBase.StrudentName[Page].Count, Converter(groupParsing));
-        
 
-        tableTextCell.GroupCell.text = groupParsing.Name; // присваиваем группу
+
+        PasteGroupName(groupParsing.Name); // присваиваем группу
         string[] groupNameData = ConverterGroupNameData(groupParsing.Name);
 
         if (groupNameData == null) return;
 
-        int yearName = Convert.ToInt32(groupNameData[0]);
+        string yearName = groupNameData[0];
         string specializationName = groupNameData[1];
         string groupName = groupNameData[2];
+
         bool SpecializationName_ContainsKey = false;
-        int FacultyName = -1;
+        int FacultyNameID = -1;
         for (int i = 0; i< FireBase.fireBaseData.Faculties.Count;i++)
         {
-            FacultyName = i;
+            FacultyNameID = i;
             Faculty faculty = FireBase.fireBaseData.Faculties[i];
             SpecializationName_ContainsKey = faculty.Specializations.ContainsKey(specializationName);
             if (SpecializationName_ContainsKey)
@@ -53,13 +54,13 @@ public class FormingTabelDate : MonoBehaviour
         }
         if (!SpecializationName_ContainsKey) { return; }
 
-        bool YearName_ContainsKey = FireBase.fireBaseData.Faculties[FacultyName].Specializations[specializationName].Years.ContainsKey(yearName.ToString());
+        bool YearName_ContainsKey = FireBase.fireBaseData.Faculties[FacultyNameID].Specializations[specializationName].Years.ContainsKey(yearName);
         if (!YearName_ContainsKey) { return; }
 
-        bool groupName_ContainsKey = FireBase.fireBaseData.Faculties[FacultyName].Specializations[specializationName].Years[yearName.ToString()].Groups.ContainsKey(groupName);
+        bool groupName_ContainsKey = FireBase.fireBaseData.Faculties[FacultyNameID].Specializations[specializationName].Years[yearName].Groups.ContainsKey(groupName);
         if (!groupName_ContainsKey) {return; }
 
-        Group group = FireBase.fireBaseData.Faculties[FacultyName].Specializations[specializationName].Years[yearName.ToString()].Groups[groupName];
+        Group group = FireBase.fireBaseData.Faculties[FacultyNameID].Specializations[specializationName].Years[yearName].Groups[groupName];
         Debug.Log(group.Students.Count);
         if (groupName_ContainsKey)
         {
@@ -173,5 +174,9 @@ public class FormingTabelDate : MonoBehaviour
 
 
         };
+    }
+
+    private void PasteGroupName(string Name) {
+        tableTextCell.GroupCell.text = Name;
     }
 }
