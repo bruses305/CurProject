@@ -28,9 +28,6 @@ public class TableObjectData : MonoBehaviour
         UpdateTMPData();
 
     }
-    private void Start() {
-        UpdateLessonCell(new() { 4,4,4,4,4,4});
-    }
 
     private void UpdateTableData(object sender, EventArgs e) {
         UpdateTMPData();
@@ -91,7 +88,6 @@ public class TableObjectData : MonoBehaviour
     }
     public void UpdatePersonCell(int personCount) {
         CRCChildObject(PersonParent.transform, PersonPrefab, personCount);
-
         Transform NParent = this.NParent.transform;
 
         foreach (Transform lessonTime in NParent.transform) // добавляем N

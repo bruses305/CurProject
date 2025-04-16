@@ -7,9 +7,9 @@ using UnityEngine.UI;
 
 public class SelectCells : MonoBehaviour
 {
-    [SerializeField] private Color colorSelect;
-    [SerializeField] private Color colorBaseSelect;
-    [SerializeField] private Color colorDefould;
+    private Color colorSelect = new(45f / 255f, 60f / 255f, 63f / 255f);
+    private Color colorBaseSelect = new(72f / 255f, 90f / 255f, 94f / 255f);
+    private Color colorDefould = new(45f/255f, 42f / 255f, 63f / 255f);
     private List<List<Image>> NTableObjectCell;
     private Vector2Int defouldPositionPinned = new(-1,-1);
     private Vector2Int positionPinned = new(-1, -1);

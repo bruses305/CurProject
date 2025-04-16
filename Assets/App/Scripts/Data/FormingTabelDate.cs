@@ -7,12 +7,13 @@ using System;
 using System.Linq;
 using UnityEngine.Tilemaps;
 using System.Threading.Tasks;
+using System.Collections;
 
 public class FormingTabelDate : MonoBehaviour
 {
     [SerializeField] Parsing parsing;
-    [SerializeField] TableObjectData TableObjectData;
-    private TableTextCell tableTextCell { get { return TableObjectData.tableTextCell; }}
+    [SerializeField] TableObjectData tableObjectData;
+    private TableTextCell tableTextCell => tableObjectData.tableTextCell;
     private void Start() {
         parsing.PageEvent += EventFormingTable;
     }
@@ -39,7 +40,7 @@ public class FormingTabelDate : MonoBehaviour
 
         bool SpecializationName_ContainsKey = false;
         int FacultyNameID = -1;
-        for (int i = 0; i< FireBase.fireBaseData.Faculties.Count;i++)
+        for (int i = 0; i < FireBase.fireBaseData.Faculties.Count; i++)
         {
             FacultyNameID = i;
             Faculty faculty = FireBase.fireBaseData.Faculties[i];
@@ -55,14 +56,14 @@ public class FormingTabelDate : MonoBehaviour
         if (!YearName_ContainsKey) { return; }
 
         bool groupName_ContainsKey = FireBase.fireBaseData.Faculties[FacultyNameID].Specializations[specializationName].Years[yearName].Groups.ContainsKey(groupName);
-        if (!groupName_ContainsKey) {return; }
+        if (!groupName_ContainsKey) { return; }
 
         Group group = FireBase.fireBaseData.Faculties[FacultyNameID].Specializations[specializationName].Years[yearName].Groups[groupName];
         if (groupName_ContainsKey)
         {
             if (tableTextCell.TablePersonCell.Count != group.Students.Count)
             {
-                TableObjectData.UpdatePersonCell(group.Students.Count);
+                tableObjectData.UpdatePersonCell(group.Students.Count);
                 Debug.Log("Fail Loading Student Name Data Or Error Table Cell");
             }
             for (int idPersonCell = 0; idPersonCell < tableTextCell.TablePersonCell.Count; idPersonCell++)
@@ -74,15 +75,27 @@ public class FormingTabelDate : MonoBehaviour
         else { Debug.LogError("Fail Loading Group"); }
 
 
-        for (int idCell = 0; idCell< tableTextCell.TableDateCell.Count && idCell < groupParsing.dateParses.Count; idCell++) // добавляем даты
+        for (int idCell = 0; idCell < tableTextCell.TableDateCell.Count && idCell < groupParsing.dateParses.Count; idCell++) // добавляем даты
         {
             TextMeshProUGUI CellDate = tableTextCell.TableDateCell[idCell];
 
             CellDate.text = groupParsing.dateParses[idCell].dateTime;
         }
+        List<int> lessonCells = new();
+        bool isUpdate = false;
+        for (int idDate = 0; idDate < tableTextCell.TableLessonCell.Count && idDate < groupParsing.dateParses.Count; idDate++)
+        {
+            lessonCells.Add(groupParsing.dateParses[idDate].Lessons.Count);
+            if (!isUpdate && (tableTextCell.TableLessonCell[idDate].Count != groupParsing.dateParses[idDate].Lessons.Count)) isUpdate = true;
+            
+        }
 
+        if (isUpdate)
+        {
+            tableObjectData.UpdateLessonCell(lessonCells);
+        }
         for (int idDate = 0; idDate < tableTextCell.TableLessonCell.Count && idDate < groupParsing.dateParses.Count; idDate++) {
-            for (int idColumn = 0; idColumn < tableTextCell.TableLessonCell[idDate].Count && idColumn < groupParsing.dateParses[idDate].Lessons.Count; idColumn++)
+            for (int idColumn = 0; idColumn < groupParsing.dateParses[idDate].Lessons.Count; idColumn++)
             {
                 tableTextCell.TableLessonCell[idDate][idColumn].text = groupParsing.dateParses[idDate].Lessons[idColumn];
 
@@ -93,7 +106,10 @@ public class FormingTabelDate : MonoBehaviour
                 }//вывод N*/
             }
         }
+        StartCoroutine(timerReloadingTable());
+
     }
+
 
     public static string[] ConverterGroupNameData(string GroupName) { //0-год 1-специальность 2-группа
         try
@@ -175,6 +191,13 @@ public class FormingTabelDate : MonoBehaviour
 
     private void PasteGroupName(string Name) {
         tableTextCell.GroupCell.text = Name;
+    }
+
+    public IEnumerator timerReloadingTable() {
+        yield return new WaitForSeconds(0f);
+        tableObjectData.gameObject.SetActive(false);
+        yield return new WaitForSeconds(0f);
+        tableObjectData.gameObject.SetActive(true);
     }
 
 }

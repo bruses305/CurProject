@@ -353,7 +353,6 @@ public class FireBase
             {
                 for (DateTime dateTime = startDateTime; dateTime <= endDateTime; dateTime += new TimeSpan(1, 0, 0, 0))
                 {
-                    Debug.Log(dateTime);
                     dates.Add(dateReference.Child(dateTime.Day + "-" + dateTime.Month + "-" + dateTime.Year));
                 }
             }
@@ -382,9 +381,23 @@ public class FireBase
 
     #region Create
 
-    public async Task<bool> CreateGroup(string name, string idFaculty, string idSpecialization, string idYear, DatabaseReference groupReference = null) {
+    public async Task<bool> CreateGroup(string name, string idFaculty = null, string idSpecialization = null, string idYear = null, DatabaseReference groupReference = null) {
         try
         {
+            if(idFaculty == null)
+            {
+                string[] groupData = FormingTabelDate.ConverterGroupNameData(name);
+                if(groupData[2] != null)
+                {
+                    idSpecialization = groupData[1];
+                    idYear = groupData[0];
+                    name = groupData[2];
+                    idFaculty = await FindFaculty(idSpecialization);
+                }
+                else {
+                    return false;
+                }
+            }
             DatabaseReference reference_Group;
             if (groupReference != null) reference_Group = groupReference;
             else
@@ -574,7 +587,24 @@ public class FireBase
         }
 
     }
+    private async Task<string> FindFaculty(string name) {
+        string FacultyNameDefould = "New";
 
+        string[] groupData = FormingTabelDate.ConverterGroupNameData(name);
+
+        List<DatabaseReference> facultyReferenceList = await GetChiledsAsync(reference, Faculty.key);
+
+        foreach (var facultyReference in facultyReferenceList)
+        {
+            DatabaseReference specializationReference = facultyReference.Child(Specialization.key).Child(name);
+
+            if((await ChildCount(specializationReference))>0)
+                    return facultyReference.Key;
+        }
+
+        return FacultyNameDefould;
+
+    }
     public async Task<DatabaseReference> SearchGroupReference(string name) {
         string[] groupData = FormingTabelDate.ConverterGroupNameData(name);
 

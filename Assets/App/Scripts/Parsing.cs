@@ -26,65 +26,43 @@ public class Parsing : MonoBehaviour
     private DateTime dateTime_Now = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day);
 
 
-    private async void Awake() {
+    private void Awake() {
         if (PlayerPrefs.HasKey(GroupNamePlayerPrefs))
             parsingGroupName = PlayerPrefs.GetString(GroupNamePlayerPrefs);
         else
             PlayerPrefs.SetString(GroupNamePlayerPrefs, parsingGroupName);
         fireBase.Initialized();
 
-        await LoadingDefouldData(parsingGroupName, true);
     }
-    private void Start() {
+    private async void Start() {
         fireBase.ParsingFireBaseEnd += ParsingWebSite;
+        await LoadingDefouldData(parsingGroupName, true);
     }
 
     private void ParsingWebSite(object sender, EventArgs e) {
         Debug.Log("All Parsing Web Site");
         AllParsing();
     }
-    private async Task<T> TimeTrigger<T>(Task<T> task, float timeOut = 10f) {
-        CancellationTokenSource cancelTokenSource = new CancellationTokenSource();
-
-        var fieldInfo = typeof(Task<T>).GetField("m_action", BindingFlags.NonPublic | BindingFlags.Instance);
-        var value = fieldInfo.GetValue(task);
-
-
-        Coroutine corotine = StartCoroutine(ResourceTickOver(cancelTokenSource, task.ToString(), timeOut));
-        T Data = default(T);
-
-        try
-        {
-            Data = await Task.Run(() => task, cancelTokenSource.Token);
-        }
-        catch
-        {
-            Debug.Log("Error Connecting");
-        }
-        
-        StopCoroutine(corotine);
-        Debug.Log(Data);
-        return Data;
-    }
     public async void ButtonEventLoadingAllData() {
         await Task.Run(fireBase.LoadingAllData);
     }
-    private async Task LoadingDefouldData(string parsGroupName = null, bool isUpdate = false) {
+    public async Task LoadingDefouldData(string parsGroupName = null, bool isUpdate = false) {
         int countParsingFail = 0;
         do
         {
             Debug.Log("StartDefouldParsing");
             bool FB = await TimeTrigger(fireBase.LoadingData(parsGroupName));  //нужно реализовать чтобы данные о пройденных занятиях подключались к GroupParsing2 а потом и к GroupParssing1 при полном парсинге
-            if (FB)
+            ParsingDataDefould = await TimeTrigger(ParsingMetod(parsGroupName, isUpdate));
+            if (ParsingDataDefould != default(GroupParsing))
             {
-                ParsingDataDefould = await TimeTrigger(ParsingMetod(parsGroupName, isUpdate));
-                if (ParsingDataDefould != default(GroupParsing))
+                if (!FB)
                 {
-                    ParsingData1[parsGroupName].MergingObjectDate(ParsingDataDefould.dateParses);
-                    PageEvent.Invoke(this, EventArgs.Empty);  // вызов инвента на обновление таблицы
-                    //ивент на закрытие загрузочного экрана
-                    return;
+                    await fireBase.CreateGroup(ParsingDataDefould.Name);
                 }
+                ParsingData1[parsGroupName].MergingObjectDate(ParsingDataDefould.dateParses);
+                PageEvent.Invoke(this, EventArgs.Empty);  // вызов инвента на обновление таблицы
+                                                          //ивент на закрытие загрузочного экрана
+                return;
             }
             countParsingFail++;
         }
@@ -272,6 +250,29 @@ public class Parsing : MonoBehaviour
 
         DateTime.TryParseExact(data, "d.M", null, System.Globalization.DateTimeStyles.None, out DateTime time);
         return time;
+    }
+    private async Task<T> TimeTrigger<T>(Task<T> task, float timeOut = 10f) {
+        CancellationTokenSource cancelTokenSource = new CancellationTokenSource();
+
+        var fieldInfo = typeof(Task<T>).GetField("m_action", BindingFlags.NonPublic | BindingFlags.Instance);
+        var value = fieldInfo.GetValue(task);
+
+
+        Coroutine corotine = StartCoroutine(ResourceTickOver(cancelTokenSource, task.ToString(), timeOut));
+        T Data = default(T);
+
+        try
+        {
+            Data = await Task.Run(() => task, cancelTokenSource.Token);
+        }
+        catch
+        {
+            Debug.Log("Error Connecting");
+        }
+
+        StopCoroutine(corotine);
+        Debug.Log(Data);
+        return Data;
     }
     IEnumerator ResourceTickOver(CancellationTokenSource token, string taskType = "", float waitTime = 10) {
         yield return new WaitForSeconds(waitTime);
