@@ -33,7 +33,7 @@ public class Parsing : MonoBehaviour
             PlayerPrefs.SetString(GroupNamePlayerPrefs, parsingGroupName);
         fireBase.Initialized();
 
-        await LoadingDefouldData();
+        await LoadingDefouldData(parsingGroupName, true);
     }
     private void Start() {
         fireBase.ParsingFireBaseEnd += ParsingWebSite;
@@ -69,19 +69,18 @@ public class Parsing : MonoBehaviour
     public async void ButtonEventLoadingAllData() {
         await Task.Run(fireBase.LoadingAllData);
     }
-    private async Task LoadingDefouldData(string parsGroupName = null) {
+    private async Task LoadingDefouldData(string parsGroupName = null, bool isUpdate = false) {
         int countParsingFail = 0;
-        if(parsGroupName != null) parsingGroupName = parsGroupName;
         do
         {
             Debug.Log("StartDefouldParsing");
-            bool FB = await TimeTrigger(fireBase.LoadingData(parsingGroupName));  //нужно реализовать чтобы данные о пройденных занятиях подключались к GroupParsing2 а потом и к GroupParssing1 при полном парсинге
+            bool FB = await TimeTrigger(fireBase.LoadingData(parsGroupName));  //нужно реализовать чтобы данные о пройденных занятиях подключались к GroupParsing2 а потом и к GroupParssing1 при полном парсинге
             if (FB)
             {
-                ParsingDataDefould = await TimeTrigger(ParsingMetod(parsingGroupName,true));
+                ParsingDataDefould = await TimeTrigger(ParsingMetod(parsGroupName, isUpdate));
                 if (ParsingDataDefould != default(GroupParsing))
                 {
-                    ParsingData1[parsingGroupName].MergingObjectDate(ParsingDataDefould.dateParses);
+                    ParsingData1[parsGroupName].MergingObjectDate(ParsingDataDefould.dateParses);
                     PageEvent.Invoke(this, EventArgs.Empty);  // вызов инвента на обновление таблицы
                     //ивент на закрытие загрузочного экрана
                     return;
