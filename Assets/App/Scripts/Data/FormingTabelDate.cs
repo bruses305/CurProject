@@ -12,7 +12,6 @@ public class FormingTabelDate : MonoBehaviour
 {
     [SerializeField] Parsing parsing;
     [SerializeField] TableObjectData TableObjectData;
-
     private TableTextCell tableTextCell { get { return TableObjectData.tableTextCell; }}
     private void Start() {
         parsing.PageEvent += EventFormingTable;
@@ -82,22 +81,16 @@ public class FormingTabelDate : MonoBehaviour
             CellDate.text = groupParsing.dateParses[idCell].dateTime;
         }
 
-        for (int idDate = 0; idDate < tableTextCell.TableCell.Count && idDate < groupParsing.dateParses.Count; idDate++) {
-            for (int idColumn = 0; idColumn < tableTextCell.TableCell[idDate].Count && idColumn < groupParsing.dateParses[idDate].Lessons.Count; idColumn++)
+        for (int idDate = 0; idDate < tableTextCell.TableLessonCell.Count && idDate < groupParsing.dateParses.Count; idDate++) {
+            for (int idColumn = 0; idColumn < tableTextCell.TableLessonCell[idDate].Count && idColumn < groupParsing.dateParses[idDate].Lessons.Count; idColumn++)
             {
-                for (int idCell = 0; idCell < tableTextCell.TableCell[idDate][idColumn].Count/* && колличество строк в таблицах данных N + 1*/; idCell++)
+                tableTextCell.TableLessonCell[idDate][idColumn].text = groupParsing.dateParses[idDate].Lessons[idColumn];
+
+                /*else
                 {
-                    if (idCell == 0) // ¬ывод названий дисциплин
-                    {
-                        tableTextCell.TableCell[idDate][idColumn][0].text = groupParsing.dateParses[idDate].Lessons[idColumn];
-                        break;
-                    }
-                    else
-                    {
-                        TypeCellN typeCellN = SerchStudentCell(group, groupParsing, idDate, idColumn, idCell);
-                        CellTextN(tableTextCell.TableCell[idDate][idColumn][idCell], typeCellN);
-                    }//вывод N
-                }
+                    TypeCellN typeCellN = SerchStudentCell(group, groupParsing, idDate, idColumn, idCell);
+                    CellTextN(tableTextCell.TableCell[idDate][idColumn][idCell], typeCellN);
+                }//вывод N*/
             }
         }
     }
@@ -183,4 +176,5 @@ public class FormingTabelDate : MonoBehaviour
     private void PasteGroupName(string Name) {
         tableTextCell.GroupCell.text = Name;
     }
+
 }

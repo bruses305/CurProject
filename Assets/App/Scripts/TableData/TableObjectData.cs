@@ -1,79 +1,70 @@
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using Unity.VisualScripting;
+using System;
+using UnityEngine.UIElements;
+using UnityEngine.EventSystems;
 
 public class TableObjectData : MonoBehaviour
 {
     [SerializeField] private GameObject PersonPrefab;
     [SerializeField] private GameObject LassonNamePrefab;
     [SerializeField] private GameObject NPrefab;
+    [SerializeField] private GameObject NParentPrefab;
     [SerializeField] private GameObject TimePrefab;
 
-    [SerializeField] private GameObject styleTimePrefab;
-    [SerializeField] private GameObject styleLassonNamePrefab;
-    [SerializeField] private GameObject styleNPrefab;
-    private void Awake() {
-        tableColumn = AllChiledObject(gameObject);
+    [SerializeField] private GameObject PersonParent;
+    [SerializeField] private GameObject LessonParent;
+    [SerializeField] private GameObject NParent;
+    [SerializeField] private GameObject TimeParent;
+    [SerializeField] private GameObject GroupParent;
 
+    [SerializeField] private SelectCells selectCells;
+
+    public static event EventHandler updateTableData;
+    private void Awake() {
+        updateTableData += UpdateTableData;
         UpdateTMPData();
 
     }
-
-    private void UpdateTMPData() {
-
-        tableTextCell.GroupCell = ChiledTextObjectGroupName(tableColumn[0]);
-        tableTextCell.TablePersonCell = AllChiledTextObjectPerson(tableColumn[1]);
-        tableTextCell.TableDateCell = AllChiledTextObjectDate(tableColumn[2]);
-        tableTextCell.TableCell = AllChiledTextObjectTable(tableColumn[2]);
+    private void Start() {
+        UpdateLessonCell(new() { 4,4,4,4,4,4});
     }
 
-    private List<GameObject> tableColumn; //0-ФИО 1-Время
+    private void UpdateTableData(object sender, EventArgs e) {
+        UpdateTMPData();
+    }
+
+    private void UpdateTMPData() {
+        tableTextCell.GroupCell = ChiledTextObjectGroupName(GroupParent);
+        tableTextCell.TablePersonCell = AllChiledTextObjectPerson(PersonParent);
+        tableTextCell.TableDateCell = AllChiledTextObjectDate(TimeParent);
+        tableTextCell.TableLessonCell = AllChiledTextObjectLessonOrN(LessonParent);
+        tableTextCell.TableNCell = AllChiledTextObjectLessonOrN(NParent);
+    }
+
 
     public TableTextCell tableTextCell = new();
 
-    private List<GameObject> AllChiledObject(GameObject parent) {
-        List<GameObject> childs = new List<GameObject>
-        {
-            parent.transform.GetChild(0).gameObject,
-            parent.transform.GetChild(1).gameObject,
-            parent.transform.GetChild(3).gameObject,
-            parent.transform.GetChild(2).gameObject//style
-        };
-        /*
-        foreach (Transform ColumnTime in parent.transform.GetChild(1))
-        {
-            foreach (Transform Column in ColumnTime) {
-                childs.Add(Column.gameObject);
-            }
-        }*/
-
-        return childs;
-    }
+    
     private TextMeshProUGUI ChiledTextObjectGroupName(GameObject parent) {
-        return parent.transform.GetChild(0).GetChild(0).gameObject.GetComponent<TextMeshProUGUI>();
+        return parent.transform.GetChild(1).gameObject.GetComponent<TextMeshProUGUI>();
     }
-    private List<List<List<TextMeshProUGUI>>> AllChiledTextObjectTable(GameObject parent) {
-        List<List<List<TextMeshProUGUI>>> childs = new ();
+    private List<List<TextMeshProUGUI>> AllChiledTextObjectLessonOrN(GameObject AllDataParent) {
+        List<List<TextMeshProUGUI>> dataTableCells = new();
 
-        foreach (Transform TimesCells in parent.transform)//просматриваем все даты
+        foreach (Transform dataParent in AllDataParent.transform)
         {
-            List<List<TextMeshProUGUI>> TimeCells = new();
-            foreach(Transform LessonsNames in TimesCells) // просматриваем все колонки предметов в эту дату
+            List<TextMeshProUGUI> DataCellList = new();
+            foreach (Transform DataCell in dataParent)
             {
-                List<TextMeshProUGUI> LessonsName = new();
-                foreach (Transform LessonsCell in LessonsNames) // просматриваем ячейки в колонке
-                {
-                    LessonsName.Add(LessonsCell.GetChild(0).gameObject.GetComponent<TextMeshProUGUI>());
-                }
-                TimeCells.Add(LessonsName);
+                DataCellList.Add(DataCell.GetChild(0).gameObject.GetComponent<TextMeshProUGUI>());
             }
-            childs.Add(TimeCells);
+            dataTableCells.Add(DataCellList);
         }
-        
 
-        
-
-        return childs;
+        return dataTableCells;
     }
     private List<TextMeshProUGUI> AllChiledTextObjectPerson(GameObject parent) {
         List<TextMeshProUGUI> childs = new List<TextMeshProUGUI>();
@@ -98,86 +89,61 @@ public class TableObjectData : MonoBehaviour
 
         return childs;
     }
-
     public void UpdatePersonCell(int personCount) {
-        DestoroyChildObject(tableColumn[1]);
-        CreateChildObject(tableColumn[1].transform, PersonPrefab,personCount);
+        CRCChildObject(PersonParent.transform, PersonPrefab, personCount);
 
+        Transform NParent = this.NParent.transform;
 
-        Transform timePerson = tableColumn[2].transform;
-        Transform styleTimePerson = tableColumn[3].transform;
-
-        foreach (Transform time in timePerson.transform)
+        foreach (Transform lessonTime in NParent.transform) // добавляем N
         {
-            foreach (Transform lessonTime in time.transform)
+            foreach (Transform Nlesson in lessonTime.transform)
             {
-                DestoroyChildObject(lessonTime.gameObject, 1);
-            }
-        }
-        foreach (Transform styleTime in styleTimePerson.transform)
-        {
-            foreach (Transform styleLessonTime in styleTime.transform)
-            {
-                DestoroyChildObject(styleLessonTime.gameObject, 1);
+                CRCChildObject(Nlesson, NPrefab, personCount);
             }
         }
 
-        foreach (Transform time in timePerson.transform)
-        {
-            foreach (Transform lessonTime in time.transform)
-            {
-                CreateChildObject(lessonTime,NPrefab,personCount);
-            }
-        }
-        foreach (Transform styleTime in styleTimePerson.transform)
-        {
-            foreach (Transform styleLessonTime in styleTime.transform)
-            {
-                CreateChildObject(styleLessonTime, styleNPrefab, personCount);
-            }
-        }
-
-        UpdateTMPData();
+        updateTableData.Invoke(this, EventArgs.Empty);
     }
-    public void UpdateLessonCell(int LessonCount) {
-        DestoroyChildObject(tableColumn[1]);
-        CreateChildObject(tableColumn[1].transform, PersonPrefab, LessonCount);
-
-
-        Transform timePerson = tableColumn[2].transform;
-        Transform styleTimePerson = tableColumn[3].transform;
-
-        foreach (Transform time in timePerson.transform)
+    public void UpdateLessonCell(List<int> DatesLesson) {
+        int studentCount = tableTextCell.TablePersonCell.Count;
+        int countLesson = 0;
+        for (int idDate = 0;idDate < DatesLesson.Count; countLesson += DatesLesson[idDate], idDate++)
         {
-            foreach (Transform lessonTime in time.transform)
-            {
-                DestoroyChildObject(lessonTime.gameObject, 1);
-            }
+            Transform parentLessons = tableTextCell.TableDateCell[idDate].transform;
+            CRCChildObject(parentLessons, LassonNamePrefab, DatesLesson[idDate]);
         }
-        foreach (Transform styleTime in styleTimePerson.transform)
+        CRCChildObject(NParent.transform, NParentPrefab, countLesson);
+        for (int i = 0; i< NParent.transform.childCount;i++)
         {
-            foreach (Transform styleLessonTime in styleTime.transform)
-            {
-                DestoroyChildObject(styleLessonTime.gameObject, 1);
-            }
+            CRCChildObject(NParent.transform.GetChild(i), NPrefab, i, studentCount);
         }
 
-        foreach (Transform time in timePerson.transform)
-        {
-            foreach (Transform lessonTime in time.transform)
-            {
-                CreateChildObject(lessonTime, NPrefab, LessonCount);
-            }
-        }
-        foreach (Transform styleTime in styleTimePerson.transform)
-        {
-            foreach (Transform styleLessonTime in styleTime.transform)
-            {
-                CreateChildObject(styleLessonTime, styleNPrefab, LessonCount);
-            }
-        }
+        updateTableData.Invoke(this, EventArgs.Empty);
+    }
 
-        UpdateTMPData();
+    private void CRCChildObject(Transform parent, GameObject prefab, int count = 1) {
+        if (count < parent.childCount)
+        {
+            DestoroyChildObject(parent.gameObject, count);
+            ClearChildObject(parent.gameObject);
+        }
+        else
+        {
+            ClearChildObject(parent.gameObject);
+            CreateChildObject(parent, prefab, count - parent.childCount);
+        }
+    }
+    private void CRCChildObject(Transform parent, GameObject prefab, int positionColum, int count = 1) {
+        if (count < parent.childCount)
+        {
+            DestoroyChildObject(parent.gameObject, count);
+            ClearChildObject(parent.gameObject);
+        }
+        else
+        {
+            ClearChildObject(parent.gameObject);
+            CreateChildObject(parent, prefab, positionColum, count - parent.childCount);
+        }
     }
 
     private void DestoroyChildObject(GameObject parent,int indexStart = 0, int indexEnd = int.MaxValue) {
@@ -195,13 +161,60 @@ public class TableObjectData : MonoBehaviour
             Destroy(chiled);
         }
     }
-    private void CreateChildObject(Transform parent, GameObject prefab, int count) {
-        int personCellCount = parent.childCount;
+
+    private void ClearChildObject(GameObject parent, int indexStart = 0, int indexEnd = int.MaxValue) {
+        int personCellCount = parent.transform.childCount;
+        if (indexEnd > personCellCount) indexEnd = personCellCount - 1;
+        for (int i = indexEnd; i >= indexStart; i--)
+        {
+            if (parent.transform.childCount <= indexStart)
+            {
+                Debug.LogError("Колличество parentPerson.childCount не совпадает");
+                return;
+            }
+            GameObject TMPObject = parent.transform.GetChild(i).GetChild(0).gameObject;
+            TMPObject.TryGetComponent(out TextMeshProUGUI TMP);
+            if(TMP!=null)
+                TMP.text = "";
+        }
+    }
+
+    private void CreateChildObject(Transform parent, GameObject prefab, int count = 1){
         for (int i = 0; i < count; i++)
         {
             Instantiate(prefab, parent);
         }
     }
+    private void CreateChildObject(Transform parent, GameObject prefab, int positionColum, int count = 1) {
+        for (int i = 0; i < count; i++)
+        {
+            GameObject gameObject = Instantiate(prefab, parent);
+            EventTrigger eventTrigger = gameObject.GetComponent<EventTrigger>();
+            int y = i;
+            EventTrigger.Entry entrySelect = new EventTrigger.Entry();
+            {
+                entrySelect.eventID = EventTriggerType.PointerEnter;
+            }
+            entrySelect.callback.AddListener(data  => selectCells.SelectNCells((PointerEventData)data, new(positionColum, y)));
+
+            EventTrigger.Entry entryUnSelect = new EventTrigger.Entry();
+            {
+                entryUnSelect.eventID = EventTriggerType.PointerExit;
+            }
+            entryUnSelect.callback.AddListener(data => selectCells.UnSelectNCells((PointerEventData)data, new(positionColum, y)));
+
+            EventTrigger.Entry entryPinned = new EventTrigger.Entry();
+            {
+                entryPinned.eventID = EventTriggerType.PointerClick;
+            }
+            entryPinned.callback.AddListener(data => selectCells.isPinned((PointerEventData)data, new(positionColum, y)));
+
+            eventTrigger.triggers.Add(entrySelect);
+            eventTrigger.triggers.Add(entryUnSelect);
+            eventTrigger.triggers.Add(entryPinned);
+        }
+    }
+
     public void FormingTableCell(int PersonCount, List<int> DateAndLessonCount) { 
         
         for(int DateCellID = 0; DateCellID< DateAndLessonCount.Count; DateCellID++)
