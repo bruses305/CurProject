@@ -23,6 +23,9 @@ public class FireBase
 
     private DateTime TimeAdd3Day = DateTime.Now + new TimeSpan(3,0,0,0);
 
+    private DateTime defouldStartParsing = DateTime.Today - new TimeSpan(DateTime.Today.Day, 0, 0, 0);
+    private DateTime defouldEndParsing = DateTime.Today - new TimeSpan(1, 0, 0, 0);
+
     public async void Initialized() {
 
         reference = FirebaseDatabase.DefaultInstance.RootReference;
@@ -113,7 +116,12 @@ public class FireBase
         }
     }
 
-    public async Task<bool> LoadingForData(string baseGroupLoad) {
+    public async Task<bool> LoadingForData(string baseGroupLoad, DateTime? startDateTime = null, DateTime? endDateTime = null) {
+        if(startDateTime == null || endDateTime == null)
+        {
+            startDateTime = defouldStartParsing;
+            endDateTime = defouldStartParsing;
+        }
         string[] GroupNameDat = FormingTabelDate.ConverterGroupNameData(baseGroupLoad).ToArray(); //0-год 1-специальность 2-группа
         if (GroupNameDat.Length != 3) return false;
 
@@ -154,7 +162,7 @@ public class FireBase
 
                             GroupParsing groupParsing = new GroupParsing() { Name = baseGroupLoad};
 
-                            List<DatabaseReference> dateReferenceList = GetDatesReference(groupReference, DateTime.Today - new TimeSpan(2, 0, 0, 0), DateTime.Today - new TimeSpan(1, 0, 0, 0));
+                            List<DatabaseReference> dateReferenceList = GetDatesReference(groupReference, DateTime.Today - new TimeSpan(DateTime.Today.Day,0,0,0), DateTime.Today - new TimeSpan(1, 0, 0, 0));
                             if (dateReferenceList.Count > 0)
                             {
                                 Dictionary<string, Dates> dates = new();

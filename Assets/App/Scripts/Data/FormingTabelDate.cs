@@ -195,6 +195,7 @@ public class FormingTabelDate : MonoBehaviour
 
     public IEnumerator timerReloadingTable() {
         yield return new WaitForSeconds(0f);
+        yield return new WaitForSeconds(0f);
         tableObjectData.gameObject.SetActive(false);
         yield return new WaitForSeconds(0f);
         tableObjectData.gameObject.SetActive(true);

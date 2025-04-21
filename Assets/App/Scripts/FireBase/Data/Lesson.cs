@@ -12,18 +12,33 @@ public class LessonFireBase
     public List<StudentMissing> StudentMissings = new();
 
     public enum TypeLesson {
-        Lecture, Practice, Curatorial, PhysicalEducation
+        Lecture,Laborator, Practice, Curatorial, PhysicalEducation
     }
 
     public static TypeLesson isTypeLesson(string type) {
+        type = type.ToUpper();
         switch (type)
         {
             case "À«":
                 return TypeLesson.Lecture;
+            case "À≈ ":
+                return TypeLesson.Lecture;
+            case "À¡«":
+                return TypeLesson.Laborator;
+            case "À¿¡":
+                return TypeLesson.Laborator;
             case "œ«":
+                return TypeLesson.Practice;
+            case "œ–¿ ":
                 return TypeLesson.Practice;
             case " «":
                 return TypeLesson.Curatorial;
+            case "»Õ‘Œ–Ã¿÷»ŒÕÕ€… ◊¿—":
+                return TypeLesson.Curatorial;
+            case " ”–¿“Œ–— »… ◊¿—":
+                return TypeLesson.Curatorial;
+            case "‘»«»◊≈— ¿ﬂ  ”À‹“”–¿":
+                return TypeLesson.PhysicalEducation;
             case "‘«":
                 return TypeLesson.PhysicalEducation;
             default:
@@ -36,6 +51,8 @@ public class LessonFireBase
         {
             case TypeLesson.Lecture:
                 return "À«";
+            case TypeLesson.Laborator:
+                return "À¡«";
             case TypeLesson.Practice:
                 return "œ«";
             case TypeLesson.Curatorial:

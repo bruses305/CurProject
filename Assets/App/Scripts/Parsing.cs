@@ -24,6 +24,7 @@ public class Parsing : MonoBehaviour
     private const string GroupNamePlayerPrefs = "GROUP_NAME";
     public static string parsingGroupName = "22хр-3";
     private DateTime dateTime_Now = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day);
+    private DateTime defouldEndDateTime = DateTime.Today + new TimeSpan(3,0,0,0);
 
 
     private void Awake() {
@@ -46,7 +47,7 @@ public class Parsing : MonoBehaviour
     public async void ButtonEventLoadingAllData() {
         await Task.Run(fireBase.LoadingAllData);
     }
-    public async Task LoadingDefouldData(string parsGroupName = null, bool isUpdate = false) {
+    public async Task LoadingDefouldData(string parsGroupName, bool isUpdate = false) {
         int countParsingFail = 0;
         do
         {
@@ -107,7 +108,9 @@ public class Parsing : MonoBehaviour
         Debug.Log("ParsingData1 CountGroup Parsing: " + ParsingData1.Count);
     }
 
-    private async Task<GroupParsing> ParsingMetod(string GroupName, bool updateData) {
+    private async Task<GroupParsing> ParsingMetod(string GroupName, bool updateData, DateTime? endDateTime = null) {
+        if (endDateTime == null) endDateTime = defouldEndDateTime;
+
         GroupParsing groupParsing = new();
         groupParsing.Name = GroupName;
 
@@ -135,7 +138,7 @@ public class Parsing : MonoBehaviour
                                 var tables = document.DocumentNode.SelectSingleNode(POLESSU_FILE2);
                                 try
                                 {
-                                    (await WorkingTabelsType2(tables, groupParsing.Name, updateData)).ForEach(groupParsing.dateParses.Add);
+                                    (await WorkingTabelsType2(tables, groupParsing.Name, updateData, endDateTime)).ForEach(groupParsing.dateParses.Add);
                                 }
                                 catch
                                 {
@@ -170,7 +173,7 @@ public class Parsing : MonoBehaviour
         }
         return HTMLInnerText;
     }
-    private async Task<List<DateParse>> WorkingTabelsType2(HtmlNode table, string groupName, bool updateData) {
+    private async Task<List<DateParse>> WorkingTabelsType2(HtmlNode table, string groupName, bool updateData, DateTime? endDateTime) {
         List<DateParse> dateParses = new();
         DatabaseReference referenceGroup = !updateData? null:await fireBase.SearchGroupReference(groupName);
         Debug.Log(groupName);
@@ -185,9 +188,9 @@ public class Parsing : MonoBehaviour
                 for (int i = 0;i< DateNodesName.Count;i++)
                 {
                     DateTime timeLesson = ConvertStringToDateTime(DateNodesName[i]);
-                    if (NodesAdd == int.MaxValue && (timeLesson.Day >= DateTime.Now.Day || timeLesson.Month > DateTime.Now.Month))
+                    if (NodesAdd == int.MaxValue && (timeLesson >= DateTime.Today && timeLesson <= endDateTime))
                         NodesAdd = i;
-                    if (timeLesson.Day >= DateTime.Now.Day || timeLesson.Month > DateTime.Now.Month)
+                    if (timeLesson >= DateTime.Today && timeLesson<= endDateTime)
                         dateParses.Add(new DateParse { dateTime = (timeLesson.Day + "-" + timeLesson.Month + "-" + timeLesson.Year) });
                 }
 
@@ -246,17 +249,13 @@ public class Parsing : MonoBehaviour
 
         return dateParses;
     }
-    private DateTime ConvertStringToDateTime(string data) {
+    public static DateTime ConvertStringToDateTime(string data) {
 
         DateTime.TryParseExact(data, "d.M", null, System.Globalization.DateTimeStyles.None, out DateTime time);
         return time;
     }
     private async Task<T> TimeTrigger<T>(Task<T> task, float timeOut = 10f) {
         CancellationTokenSource cancelTokenSource = new CancellationTokenSource();
-
-        var fieldInfo = typeof(Task<T>).GetField("m_action", BindingFlags.NonPublic | BindingFlags.Instance);
-        var value = fieldInfo.GetValue(task);
-
 
         Coroutine corotine = StartCoroutine(ResourceTickOver(cancelTokenSource, task.ToString(), timeOut));
         T Data = default(T);

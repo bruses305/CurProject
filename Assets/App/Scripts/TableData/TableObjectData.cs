@@ -8,13 +8,13 @@ using UnityEngine.EventSystems;
 
 public class TableObjectData : MonoBehaviour
 {
-    [SerializeField] private GameObject PersonPrefab;
+    [SerializeField] private GameObject StudentPrefab;
     [SerializeField] private GameObject LassonNamePrefab;
     [SerializeField] private GameObject NPrefab;
     [SerializeField] private GameObject NParentPrefab;
     [SerializeField] private GameObject TimePrefab;
 
-    [SerializeField] private GameObject PersonParent;
+    [SerializeField] private GameObject StudentParent;
     [SerializeField] private GameObject LessonParent;
     [SerializeField] private GameObject NParent;
     [SerializeField] private GameObject TimeParent;
@@ -35,10 +35,10 @@ public class TableObjectData : MonoBehaviour
 
     private void UpdateTMPData() {
         tableTextCell.GroupCell = ChiledTextObjectGroupName(GroupParent);
-        tableTextCell.TablePersonCell = AllChiledTextObjectPerson(PersonParent);
+        tableTextCell.TablePersonCell = AllChiledTextObjectPerson(StudentParent);
         tableTextCell.TableDateCell = AllChiledTextObjectDate(TimeParent);
-        tableTextCell.TableLessonCell = AllChiledTextObjectLessonOrN(LessonParent);
-        tableTextCell.TableNCell = AllChiledTextObjectLessonOrN(NParent);
+        tableTextCell.TableLessonCell = AllChiledTextObjectLesson(LessonParent);
+        tableTextCell.TableNCell = AllChiledTextObjectN(NParent);
     }
 
 
@@ -48,7 +48,22 @@ public class TableObjectData : MonoBehaviour
     private TextMeshProUGUI ChiledTextObjectGroupName(GameObject parent) {
         return parent.transform.GetChild(1).gameObject.GetComponent<TextMeshProUGUI>();
     }
-    private List<List<TextMeshProUGUI>> AllChiledTextObjectLessonOrN(GameObject AllDataParent) {
+    private List<List<TextMeshProUGUI>> AllChiledTextObjectLesson(GameObject AllDataParent) {
+        List<List<TextMeshProUGUI>> dataTableCells = new();
+
+        foreach (Transform dataParent in AllDataParent.transform)
+        {
+            List<TextMeshProUGUI> DataCellList = new();
+            foreach (Transform DataCell in dataParent.GetChild(0))
+            {
+                DataCellList.Add(DataCell.GetChild(0).gameObject.GetComponent<TextMeshProUGUI>());
+            }
+            dataTableCells.Add(DataCellList);
+        }
+
+        return dataTableCells;
+    }
+    private List<List<TextMeshProUGUI>> AllChiledTextObjectN(GameObject AllDataParent) {
         List<List<TextMeshProUGUI>> dataTableCells = new();
 
         foreach (Transform dataParent in AllDataParent.transform)
@@ -81,13 +96,13 @@ public class TableObjectData : MonoBehaviour
 
         foreach (Transform child in parent.transform)
         {
-            childs.Add(child.gameObject.GetComponent<TextMeshProUGUI>());
+            childs.Add(child.GetChild(0).gameObject.GetComponent<TextMeshProUGUI>());
         }
 
         return childs;
     }
     public void UpdatePersonCell(int personCount) {
-        CRCChildObject(PersonParent.transform, PersonPrefab, personCount);
+        CRCChildObject(StudentParent.transform, StudentPrefab, personCount);
         Transform NParent = this.NParent.transform;
 
         foreach (Transform lessonTime in NParent.transform) // добавляем N
@@ -142,7 +157,7 @@ public class TableObjectData : MonoBehaviour
         }
     }
 
-    private void DestoroyChildObject(GameObject parent,int indexStart = 0, int indexEnd = int.MaxValue) {
+    public static void DestoroyChildObject(GameObject parent,int indexStart = 0, int indexEnd = int.MaxValue) {
         int personCellCount = parent.transform.childCount;
         if (indexEnd > personCellCount) indexEnd = personCellCount-1;
         for (int i = indexEnd; i >= indexStart; i--)

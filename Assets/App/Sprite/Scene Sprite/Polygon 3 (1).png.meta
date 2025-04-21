@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: eacb00456227e1c4fb0b00ceed4febd3
+guid: 56a96698ca58fb44f85a2382d8b3f547
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 497600754102043572
-    second: Table_0
+      213: 6544136066432904929
+    second: Polygon 3 (1)_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -152,13 +152,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Table_0
+      name: Polygon 3 (1)_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 1529
-        height: 690
+        width: 37
+        height: 42
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -167,8 +167,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 4b3083cdf35d7e600800000000000000
-      internalID: 497600754102043572
+      spriteID: 1ee2e81841171da50800000000000000
+      internalID: 6544136066432904929
       vertices: []
       indices: 
       edges: []

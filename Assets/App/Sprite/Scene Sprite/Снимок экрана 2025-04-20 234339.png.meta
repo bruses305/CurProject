@@ -1,10 +1,11 @@
 fileFormatVersion: 2
-guid: 38c9243e41fc7744ea08fd1429669e0f
+guid: 9c4014ebbaf6ac24589663752ccbbc63
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 1351205994926081761
-    second: Polygon 2_0
+      213: -5574948631007777079
+    second: "\u0421\u043D\u0438\u043C\u043E\u043A \u044D\u043A\u0440\u0430\u043D\u0430
+      2025-04-20 234339_0"
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -152,13 +153,14 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Polygon 2_0
+      name: "\u0421\u043D\u0438\u043C\u043E\u043A \u044D\u043A\u0440\u0430\u043D\u0430
+        2025-04-20 234339_0"
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 37
-        height: 42
+        width: 160
+        height: 163
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -167,8 +169,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 1e682f181b270c210800000000000000
-      internalID: 1351205994926081761
+      spriteID: 9ce2bb7e1cdc1a2b0800000000000000
+      internalID: -5574948631007777079
       vertices: []
       indices: 
       edges: []
