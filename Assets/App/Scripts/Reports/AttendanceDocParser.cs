@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using DocumentFormat.OpenXml.Wordprocessing;
@@ -15,17 +16,14 @@ public class AttendanceDocParser
 
             var student = new StudentAttendance
             {
-                Number = int.TryParse(cells[0], out int n) ? n : 0,
                 FullName = cells[1],
                 StudyForm = cells[2],
-                Total = cells[33],
-                Valid = cells[34],
-                Invalid = cells[35]
+                Valid = Convert.ToInt32(cells[34]),
             };
 
             for (int d = 1; d <= 30; d++)
             {
-                student.DailyHours[d] = cells[2 + d];
+                student.DailyHours[d] = Convert.ToInt32(cells[2 + d]);
             }
 
             result.Add(student);

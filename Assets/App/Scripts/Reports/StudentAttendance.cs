@@ -2,11 +2,20 @@ using System.Collections.Generic;
 
 public class StudentAttendance
 {
-    public int Number { get; set; }
     public string FullName { get; set; }
     public string StudyForm { get; set; } // Б / П
-    public Dictionary<int, string> DailyHours { get; set; } = new(); // День -> часы
-    public string Total { get; set; }
-    public string Valid { get; set; }
-    public string Invalid { get; set; }
+    public Dictionary<int, int> DailyHours { get; set; } = new(); // День -> часы
+    public int Total => TotalHours(DailyHours);
+    public int Valid { get; set; }
+    public int Invalid => Total-Valid;
+
+    public static int TotalHours(Dictionary<int, int> DailyHours) {
+        int Total = 0;
+        for (int i = 1; i <= 30; i++)
+        {
+            DailyHours.TryGetValue(i, out int value);
+            Total = value;
+        }
+        return Total;
+    }
 }
