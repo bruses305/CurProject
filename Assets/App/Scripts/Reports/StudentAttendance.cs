@@ -14,7 +14,7 @@ public class StudentAttendance
         for (int i = 1; i <= 30; i++)
         {
             DailyHours.TryGetValue(i, out int value);
-            Total = value;
+            Total += value;
         }
         return Total;
     }

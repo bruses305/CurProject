@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using DocumentFormat.OpenXml.Wordprocessing;
+using TypeJust = StudentJustificationDocument.TypeJust;
 
 public class AttendanceDocParser
 {
@@ -42,11 +43,11 @@ public class AttendanceDocParser
             if (cells.Count >= 6)
             {
                 if (!string.IsNullOrWhiteSpace(cells[0]))
-                    docs.Add(new StudentJustificationDocument { Type = "Справка", Name = cells[0], Value = cells[1] });
+                    docs.Add(new StudentJustificationDocument { typeJust = TypeJust.Справка, Name = cells[0], Value = cells[1] });
                 if (!string.IsNullOrWhiteSpace(cells[2]))
-                    docs.Add(new StudentJustificationDocument { Type = "Заявление", Name = cells[2], Value = cells[3] });
+                    docs.Add(new StudentJustificationDocument { typeJust = TypeJust.Заявление, Name = cells[2], Value = cells[3] });
                 if (!string.IsNullOrWhiteSpace(cells[4]))
-                    docs.Add(new StudentJustificationDocument { Type = "Распоряжение", Name = cells[4], Value = cells[5] });
+                    docs.Add(new StudentJustificationDocument { typeJust = TypeJust.Распоряжение, Name = cells[4], Value = cells[5] });
             }
         }
 
