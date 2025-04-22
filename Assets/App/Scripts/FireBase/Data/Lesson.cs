@@ -12,7 +12,11 @@ public class LessonFireBase
     public List<StudentMissing> StudentMissings = new();
 
     public enum TypeLesson {
-        Lecture,Laborator, Practice, Curatorial, PhysicalEducation
+        Lecture,
+        Laborator, 
+        Practice, 
+        Curatorial, 
+        PhysicalEducation
     }
 
     public static TypeLesson isTypeLesson(string type) {
