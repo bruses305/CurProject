@@ -12,6 +12,7 @@ using Firebase.Database;
 
 public class Parsing : MonoBehaviour
 {
+    public static Parsing Instance;
     public FireBase fireBase = new();
     public event EventHandler PageEvent;
     public static Dictionary<string, GroupParsing> ParsingData1 = new();
@@ -28,6 +29,7 @@ public class Parsing : MonoBehaviour
 
 
     private void Awake() {
+        Instance = this;
         if (PlayerPrefs.HasKey(GroupNamePlayerPrefs))
             parsingGroupName = PlayerPrefs.GetString(GroupNamePlayerPrefs);
         else

@@ -6,6 +6,7 @@ using TMPro;
 
 public class TabsSwitcher : MonoBehaviour
 {
+    public static TabsSwitcher Instance;
     [SerializeField] private Button buttonJournal;
     [SerializeField] private Button buttonStatistic;
     [SerializeField] private Button buttonExport;
@@ -14,8 +15,8 @@ public class TabsSwitcher : MonoBehaviour
     private Transform tabsParent;
     private Transform windowParent;
 
-    private Transform tabSelect;
-    private GameObject windowSelect;
+    public static Transform tabSelect;
+    public static GameObject windowSelect;
 
     private const string TABS_PARENT_TAG = "Tabs Parent";
     private const string WINDOW_PARENT_TAG = "Window Parent";
@@ -24,6 +25,7 @@ public class TabsSwitcher : MonoBehaviour
     private const float colorAlphaSelect = 1;
 
     private void Awake() {
+        Instance = this;
         tabsParent = GameObject.FindWithTag(TABS_PARENT_TAG).transform;
         windowParent = GameObject.FindWithTag(WINDOW_PARENT_TAG).transform;
 
@@ -48,16 +50,29 @@ public class TabsSwitcher : MonoBehaviour
     }
     private void ReSelect(int SelectingObjectID) {
         // Disable old
-        ToggleTab(false);
-        windowSelect.SetActive(false);
+        if (tabSelect != null)
+            ToggleTab(false);
+
+        if(windowSelect != null)
+            windowSelect.SetActive(false);
 
         // Switch references
-        tabSelect = tabsParent.GetChild(SelectingObjectID);
-        windowSelect = windowParent.GetChild(SelectingObjectID).gameObject;
+        if (SelectingObjectID != 5)
+        {
+            tabSelect = tabsParent.GetChild(SelectingObjectID);
+            windowSelect = windowParent.GetChild(SelectingObjectID).gameObject;
 
-        // Enable new
-        ToggleTab(true);
-        windowSelect.SetActive(true);
+            // Enable new
+            ToggleTab(true);
+            windowSelect.SetActive(true);
+        }
+        else
+        {
+            tabSelect = null;
+            windowSelect = windowParent.GetChild(SelectingObjectID).gameObject;
+            windowSelect.SetActive(true);
+
+        }
 
     }
     private void ToggleTab(bool isActive) {

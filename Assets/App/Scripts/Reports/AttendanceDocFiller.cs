@@ -6,6 +6,7 @@ using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 using UnityEngine;
 using Color = DocumentFormat.OpenXml.Wordprocessing.Color;
+using TypeJust = StudentJustificationDocument.TypeJust;
 
 public class AttendanceDocFiller : MonoBehaviour
 {
@@ -16,20 +17,63 @@ public class AttendanceDocFiller : MonoBehaviour
     private const float RIGHTBODY = 1.27f;
     private const float LEFTTABLE = -0.76f;
     public void Create(string path) {
-        StudentAttendance student = new()
-        {
+        List<StudentAttendance> students = new(){ new(){
             FullName = "Лагун Сергей Сергеевич",
             StudyForm = "Б",
             Valid = 30,
+        },
+        new(){
+            FullName = "Лагун Сергей Сергеевич",
+            StudyForm = "Б",
+            Valid = 30,
+        },
+        new(){
+            FullName = "Лагун Сергей Сергеевич",
+            StudyForm = "Б",
+            Valid = 30,
+        },
+        new(){
+            FullName = "Лагун Сергей Сергеевич",
+            StudyForm = "Б",
+            Valid = 30,
+        },
+        new(){
+            FullName = "Лагун Сергей Сергеевич",
+            StudyForm = "Б",
+            Valid = 30,
+        }
         };
-        student.DailyHours[3] = 4;
+        students[0].DailyHours[1] = 2;
+        students[1].DailyHours[5] = 8;
+        students[2].DailyHours[3] = 6;
+        students[3].DailyHours[7] = 6;
+        students[0].DailyHours[2] = 6;
+        students[1].DailyHours[22] = 2;
+        students[1].DailyHours[15] = 4;
+
+        List<StudentJustificationDocument> Jasts = new()
+        {
+            new()
+            {
+                Name = "Лагун С.C.",
+                typeJust = TypeJust.Заявление,
+                startJust = new DateTime(2025,8,12),
+                endJust = new DateTime(2025,8,18)
+            }
+        };
+        List<StudentMakeupEntry> Makeup = new()
+        {
+            new()
+            {
+                FullName = "Лагун С.C.",
+                Hours = 4,
+                Subject = "СТОЭИ"
+            }
+        };
         CreateReport(path,
-            new List<StudentAttendance>
-        { student },
-            new List<StudentJustificationDocument>
-            { },
-            new List<StudentMakeupEntry>
-            { });
+            students,
+            Jasts,
+            Makeup);
     }
     public void CreateReport(string path, List<StudentAttendance> attendanceList, List<StudentJustificationDocument> justifications, List<StudentMakeupEntry> makeupEntries) {
         //try
@@ -149,22 +193,22 @@ public class AttendanceDocFiller : MonoBehaviour
         header.AppendChild(new TableRowProperties(
     new TableRowHeight { Val = Convert.ToUInt32(HeightRows), HeightType = HeightRuleValues.Exact } // или Exact
 ));
-        header.Append(CreateCellGrou("Справки", 2, 10, Fonts.Calibri, widthDxa: 7.69f,justificationValues: JustificationValues.Center));
-        header.Append(CreateCellGrou("Заявления", 2, 10, Fonts.Calibri, widthDxa: 5.53f, justificationValues: JustificationValues.Center));
+        header.Append(CreateCellGrou("Справки", 2, 10, Fonts.Calibri, widthDxa: 7f,justificationValues: JustificationValues.Center));
+        header.Append(CreateCellGrou("Заявления", 2, 10, Fonts.Calibri, widthDxa: 6.22f, justificationValues: JustificationValues.Center));
         header.Append(CreateCellGrou("Распоряжения", 2, 10, Fonts.Calibri, widthDxa: 6.25f, justificationValues: JustificationValues.Center));
 
         TableRow header2 = new TableRow();
         header2.AppendChild(new TableRowProperties(
     new TableRowHeight { Val = Convert.ToUInt32(HeightRows), HeightType = HeightRuleValues.Exact } // или Exact
 ));
-        header2.Append(CreateCell("Ф.И.О.", 10, Fonts.Calibri, false, justificationValues: JustificationValues.Center));
-        header2.Append(CreateCell("Дата",  10, Fonts.Calibri, false, justificationValues: JustificationValues.Center));
+        header2.Append(CreateCell("Ф.И.О.", 10, Fonts.Calibri, false, justificationValues: JustificationValues.Center, widthDxa: 3.25f));
+        header2.Append(CreateCell("Дата",  10, Fonts.Calibri, false, justificationValues: JustificationValues.Center, widthDxa: 3.75f));
 
-        header2.Append(CreateCell("Ф.И.О.", 10, Fonts.Calibri, false, justificationValues: JustificationValues.Center));
-        header2.Append(CreateCell("Дата", 10, Fonts.Calibri, false, justificationValues: JustificationValues.Center));
+        header2.Append(CreateCell("Ф.И.О.", 10, Fonts.Calibri, false, justificationValues: JustificationValues.Center, widthDxa: 3f));
+        header2.Append(CreateCell("Дата", 10, Fonts.Calibri, false, justificationValues: JustificationValues.Center, widthDxa: 3.22f));
 
-        header2.Append(CreateCell("Ф.И.О.", 10, Fonts.Calibri, false, justificationValues: JustificationValues.Center));
-        header2.Append(CreateCell("Номер и дата", 10, Fonts.Calibri, false, justificationValues: JustificationValues.Center));
+        header2.Append(CreateCell("Ф.И.О.", 10, Fonts.Calibri, false, justificationValues: JustificationValues.Center, widthDxa: 3.28f));
+        header2.Append(CreateCell("Номер и дата", 10, Fonts.Calibri, false, justificationValues: JustificationValues.Center, widthDxa: 2.96f));
 
         table.Append(header);
         table.Append(header2);
@@ -177,7 +221,7 @@ public class AttendanceDocFiller : MonoBehaviour
                 new TableRowHeight { Val = Convert.ToUInt32(HeightRows), HeightType = HeightRuleValues.Exact } // или Exact
             ));
 
-            StudentJustificationDocument? justS = list.Find(obj=>obj.typeJust == StudentJustificationDocument.TypeJust.Справка);
+            StudentJustificationDocument justS = list.Find(obj=>obj.typeJust == StudentJustificationDocument.TypeJust.Справка);
             row.Append(CreateCell(justS?.Name, 10, Fonts.Calibri, false));
             row.Append(CreateCell(justS?.Value, 10, Fonts.Calibri, false));
             if (justS != null) i++;
@@ -230,7 +274,7 @@ public class AttendanceDocFiller : MonoBehaviour
 ));
             row.Append(CreateCell(m.FullName, 10, Fonts.Calibri, false, widthDxa: 4.93f));
             row.Append(CreateCell(m.Subject, 10, Fonts.Calibri, false, widthDxa: 10.23f));
-            row.Append(CreateCell(m.Hours, 10, Fonts.Calibri, false, widthDxa: 3.79f));
+            row.Append(CreateCell(m.Hours.ToString(), 10, Fonts.Calibri, false, widthDxa: 3.79f));
             table.Append(row);
         }
 
