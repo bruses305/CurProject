@@ -6,6 +6,6 @@ public class GroupParsing
     public List<DateParse> dateParses = new();
 
     public void MergingObjectDate(List<DateParse> dateParses) {
-        dateParses.ForEach(this.dateParses.Add);
+        if(dateParses != null) dateParses.ForEach(this.dateParses.Add);
     }
 }

@@ -5,26 +5,22 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
 using System;
-using System.Collections;
-using System.Runtime.CompilerServices;
-using NUnit.Framework.Internal;
-using Unity.VisualScripting;
-using System.Xml.Linq;
-using UnityEditor.Experimental.GraphView;
-using Unity.Mathematics;
+using DocumentFormat.OpenXml.Wordprocessing;
 
 public class FireBase
 {
-    static public FireBaseData fireBaseData = new();
-    public event EventHandler ParsingFireBaseEnd;
+    public static FireBaseData fireBaseData = new();
+    public static event EventHandler ParsingFireBaseEnd;
 
     private DatabaseReference reference;
     private FirebaseAuth AutorizationPlayer;
 
     private DateTime TimeAdd3Day = DateTime.Now + new TimeSpan(3,0,0,0);
 
-    private DateTime defouldStartParsing = DateTime.Today - new TimeSpan(DateTime.Today.Day, 0, 0, 0);
-    private DateTime defouldEndParsing = DateTime.Today - new TimeSpan(1, 0, 0, 0);
+    private DateTime defouldStartParsing = DateTime.Today - new TimeSpan(DateTime.Today.Day-1, 0, 0, 0);
+    private DateTime defouldEndParsing = DateTime.Today - new TimeSpan(1, 0, 0, 0); 
+
+    private string facultyName;
 
     public async void Initialized() {
 
@@ -39,6 +35,7 @@ public class FireBase
     public async Task<bool> LoadingData(string groupName) {
         try
         {
+            Debug.Log("Start Pars FB");
             bool Admin = await Administration();
             bool Data = await LoadingForData(groupName);
             return Admin && Data;
@@ -52,7 +49,7 @@ public class FireBase
 
     public async void LoadingAllData() {
         Debug.Log("Start Loading All Data");
-        fireBaseData = new();
+        fireBaseData.Faculties = new();
         bool FBAllData = await LoadingForData(null);
         Debug.Log("FBAllData: " + FBAllData);
         ParsingFireBaseEnd.Invoke(this, EventArgs.Empty);
@@ -79,7 +76,7 @@ public class FireBase
 
     }
 
-    private async Task<List<DatabaseReference>> ParsClassData<T>(DatabaseReference reference, Dictionary<string, T> fireBaseDataDictionary, string[] GroupNameDat, int idgr, bool addConditions = false, int addConditionsReference = 0) where T : IFireBaseData, new() {
+    private async Task<List<DatabaseReference>> ParsClassData<T>(DatabaseReference reference, Dictionary<string, T> fireBaseDataDictionary/*, string[] GroupNameDat, int idgr*/, bool addConditions = false, int addConditionsReference = 0) where T : IFireBaseData, new() {
         try
         {
             T t = new();
@@ -91,7 +88,7 @@ public class FireBase
             {
                 foreach (DatabaseReference childReference in referenceList)
                 {
-                    if (childReference.Key != GroupNameDat[idgr] && GroupNameDat[idgr] != null ||
+                    if (/*childReference.Key != GroupNameDat[idgr] && GroupNameDat[idgr] != null ||*/
                         addConditions && int.Parse(childReference.Key) < addConditionsReference) { continue; }
                     
                     outReferenceList.Add(childReference);
@@ -115,17 +112,112 @@ public class FireBase
             return new();
         }
     }
+    private async Task FillGroup(string baseGroupLoad, DatabaseReference groupReference, Dictionary<string, Group> groups, DateTime? startDateTime, DateTime? endDateTime) {
 
+        string groupNumber = RedactSearchText.ConverterGroupNameData(baseGroupLoad)[2];
+        Group group = new() { Name = groupNumber };
+
+        GroupParsing groupParsing = new GroupParsing() { Name = baseGroupLoad };
+
+        List<DatabaseReference> dateReferenceList = GetDatesReference(groupReference, startDateTime, endDateTime);
+        if (dateReferenceList.Count > 0)
+        {
+            Dictionary<string, Dates> dates = new();
+
+            foreach (DatabaseReference dateReference in dateReferenceList)
+            {
+                Dates date = new Dates();
+                DateParse dateParse = new() { dateTime = dateReference.Key };
+
+                List<DatabaseReference> lessonReferenceList = await GetChiledsAsync(dateReference, LessonFireBase.Key);
+
+                if (lessonReferenceList.Count > 0)
+                {
+                    List<LessonFireBase> lessons = new List<LessonFireBase>();
+
+                    foreach (DatabaseReference lessonReference in lessonReferenceList)
+                    {
+                        LessonFireBase lesson = new LessonFireBase()
+                        {
+                            Name = (await ReadValue(lessonReference.Child(LessonFireBase.Key_NAME))).ToString(),
+                            type = LessonFireBase.isTypeLesson((await ReadValue(lessonReference.Child(LessonFireBase.Key_TYPE))).ToString())
+                        };
+
+
+                        List<DatabaseReference> studentMissingReferenceList = await GetChiledsAsync(lessonReference, StudentMissing.Key);
+
+                        if (studentMissingReferenceList.Count > 0)
+                        {
+                            List<StudentMissing> studentsMissing = new List<StudentMissing>();
+
+                            foreach (DatabaseReference studentMissingReference in studentMissingReferenceList)
+                            {
+                                StudentMissing studentMissing = new StudentMissing()
+                                {
+                                    Type = Convert.ToBoolean(await ReadValue(studentMissingReference.Child(StudentMissing.Key_TYPE))),
+                                    ID = Convert.ToInt32(await ReadValue(studentMissingReference.Child(StudentMissing.Key_ID)))
+                                };
+
+                                studentsMissing.Add(studentMissing);
+                            }
+
+                            lesson.StudentMissings = studentsMissing;
+                            lessons.Add(lesson);
+                        }
+                        else Debug.LogError("Data not foundit: LoadingForName, studentsMissingReference");
+
+                        lessons.Add(lesson);
+                        dateParse.Lessons.Add(lesson.Name);
+                    }
+                    date.lessons = lessons;
+                    dates[dateReference.Key] = date;
+                    groupParsing.dateParses.Add(dateParse);
+                }
+                //else Debug.Log("Data not foundit: LoadingForName, lessonReference");
+
+            }
+
+            group.Dates = dates;
+        }
+        else Debug.LogError("Data not foundit: LoadingForName, lessonReference");
+
+
+        List<DatabaseReference> studentReferenceList = await GetChiledsAsync(groupReference, Student.Key);
+
+        if (studentReferenceList.Count > 0)
+        {
+            List<Student> students = new();
+
+            foreach (DatabaseReference studentReference in studentReferenceList)
+            {
+                Student student = new Student()
+                {
+                    Name = (await ReadValue(studentReference.Child(Student.Key_NAME))).ToString(),
+                    ID = Convert.ToInt32(await ReadValue(studentReference.Child(Student.Key_ID)))
+                };
+
+                students.Add(student);
+            }
+
+            group.Students = students;
+        }
+        else Debug.LogWarning("Data not foundit: LoadingForName, studentReference");
+
+
+        groups[group.Name] = group;
+        Parsing.ParsingData1[baseGroupLoad] = groupParsing;
+    }
     public async Task<bool> LoadingForData(string baseGroupLoad, DateTime? startDateTime = null, DateTime? endDateTime = null) {
         if(startDateTime == null || endDateTime == null)
         {
             startDateTime = defouldStartParsing;
-            endDateTime = defouldStartParsing;
+            endDateTime = defouldEndParsing;
         }
-        string[] GroupNameDat = FormingTabelDate.ConverterGroupNameData(baseGroupLoad).ToArray(); //0-год 1-специальность 2-группа
-        if (GroupNameDat.Length != 3) return false;
+        string[] GroupNameDat = RedactSearchText.ConverterGroupNameData(baseGroupLoad).ToArray(); //0-год 1-специальность 2-группа
+        
+            if (GroupNameDat.Length != 3) return false;
 
-        List<DatabaseReference> facultyReferenceList = await GetChiledsAsync(reference, Faculty.key);
+            List<DatabaseReference> facultyReferenceList = await GetChiledsAsync(reference, Faculty.key);
 
         if (facultyReferenceList.Count > 0)
         {
@@ -135,141 +227,74 @@ public class FireBase
                 {
                     Name = facultyReference.Key
                 };
-
-                Dictionary<string, Specialization> specializations = new();
-                List<DatabaseReference> specializationReferenceList = await ParsClassData(facultyReference, specializations, GroupNameDat, 1); // 1 - специальность
-
-                foreach (DatabaseReference specializationReference in specializationReferenceList)
+                if (baseGroupLoad == null)
                 {
-                    Dictionary<string, Year> years = new();
-                    List<DatabaseReference> yearReferenceList = await ParsClassData(specializationReference, years, GroupNameDat, 0, true, 25 - 3); // 0 - год  25 - текущий год
+                    Dictionary<string, Specialization> specializations = new();
+                    List<DatabaseReference> specializationReferenceList = await ParsClassData(facultyReference, specializations/*, GroupNameDat, 1*/); // 1 - специальность
 
-                    specializations.TryGetValue(specializationReference.Key, out Specialization specialization);
-
-                    foreach (DatabaseReference yearReference in yearReferenceList)
+                    foreach (DatabaseReference specializationReference in specializationReferenceList)
                     {
+                        Dictionary<string, Year> years = new();
+                        List<DatabaseReference> yearReferenceList = await ParsClassData(specializationReference, years/*, GroupNameDat, 0*/, true, 25 - 3); // 0 - год  25 - текущий год
 
-                        Dictionary<string, Group> groups = new();
-                        List<DatabaseReference> groupReferenceList = await ParsClassData(yearReference, groups, GroupNameDat, 2); // 2 - группа
+                        specializations.TryGetValue(specializationReference.Key, out Specialization specialization);
 
-                        years.TryGetValue(yearReference.Key, out Year year);
-
-                        foreach (DatabaseReference groupReference in groupReferenceList)
+                        foreach (DatabaseReference yearReference in yearReferenceList)
                         {
-                            groups.TryGetValue(groupReference.Key, out Group group);
 
-                            if (group == null) { continue; }
+                            Dictionary<string, Group> groups = new();
+                            List<DatabaseReference> groupReferenceList = await ParsClassData(yearReference, groups/*, GroupNameDat, 2*/); // 2 - группа
 
-                            GroupParsing groupParsing = new GroupParsing() { Name = baseGroupLoad};
+                            years.TryGetValue(yearReference.Key, out Year year);
 
-                            List<DatabaseReference> dateReferenceList = GetDatesReference(groupReference, DateTime.Today - new TimeSpan(DateTime.Today.Day,0,0,0), DateTime.Today - new TimeSpan(1, 0, 0, 0));
-                            if (dateReferenceList.Count > 0)
+                            foreach (DatabaseReference groupReference in groupReferenceList)
                             {
-                                Dictionary<string, Dates> dates = new();
-
-                                foreach (DatabaseReference dateReference in dateReferenceList)
-                                {
-                                    Dates date = new Dates();
-                                    DateParse dateParse = new() { dateTime = dateReference.Key };
-
-                                    List<DatabaseReference> lessonReferenceList = await GetChiledsAsync(dateReference, LessonFireBase.Key);
-
-                                    if (lessonReferenceList.Count > 0)
-                                    {
-                                        List<LessonFireBase> lessons = new List<LessonFireBase>();
-
-                                        foreach (DatabaseReference lessonReference in lessonReferenceList)
-                                        {
-                                            LessonFireBase lesson = new LessonFireBase()
-                                            {
-                                                Name = (await ReadValue(lessonReference.Child(LessonFireBase.Key_NAME))).ToString(),
-                                                type = LessonFireBase.isTypeLesson((await ReadValue(lessonReference.Child(LessonFireBase.Key_TYPE))).ToString())
-                                            };
-
-
-                                            List<DatabaseReference> studentMissingReferenceList = await GetChiledsAsync(lessonReference, StudentMissing.Key);
-
-                                            if (studentMissingReferenceList.Count > 0)
-                                            {
-                                                List<StudentMissing> studentsMissing = new List<StudentMissing>();
-
-                                                foreach (DatabaseReference studentMissingReference in studentMissingReferenceList)
-                                                {
-                                                    StudentMissing studentMissing = new StudentMissing()
-                                                    {
-                                                        Type = Convert.ToBoolean(await ReadValue(studentMissingReference.Child(StudentMissing.Key_TYPE))),
-                                                        ID = Convert.ToInt32(await ReadValue(studentMissingReference.Child(StudentMissing.Key_ID)))
-                                                    };
-
-                                                    studentsMissing.Add(studentMissing);
-                                                }
-
-                                                lesson.StudentMissings = studentsMissing;
-                                                lessons.Add(lesson);
-                                            }
-                                            else Debug.LogError("Data not foundit: LoadingForName, studentsMissingReference");
-
-                                            lessons.Add(lesson);
-                                            dateParse.Lessons.Add(lesson.Name);
-                                        }
-                                        date.lessons = lessons;
-                                        dates[dateReference.Key] = date;
-                                        groupParsing.dateParses.Add(dateParse);
-                                    }
-                                    //else Debug.Log("Data not foundit: LoadingForName, lessonReference");
-
-                                }
-
-                                group.Dates = dates;
+                                await FillGroup(baseGroupLoad,groupReference,groups, startDateTime,endDateTime);
                             }
-                            else Debug.LogError("Data not foundit: LoadingForName, lessonReference");
 
+                            year.Groups = groups;
+                            years[year.Name] = year;
 
-                            List<DatabaseReference> studentReferenceList = await GetChiledsAsync(groupReference, Student.Key);
-
-                            if (studentReferenceList.Count > 0)
-                            {
-                                List<Student> students = new();
-
-                                foreach (DatabaseReference studentReference in studentReferenceList)
-                                {
-                                    Student student = new Student()
-                                    {
-                                        Name = (await ReadValue(studentReference.Child(Student.Key_NAME))).ToString(),
-                                        ID = Convert.ToInt32(await ReadValue(studentReference.Child(Student.Key_ID)))
-                                    };
-
-                                    students.Add(student);
-                                }
-
-                                group.Students = students;
-                            }
-                            else Debug.LogWarning("Data not foundit: LoadingForName, studentReference");
-
-
-                            groups[group.Name] = group;
-
-                            Parsing.ParsingData1[baseGroupLoad] = groupParsing;
                         }
 
-                        year.Groups = groups;
-                        years[year.Name] = year;
+                        specialization.Years = years;
+                        specializations[specialization.Name] = specialization;
 
                     }
 
-                    specialization.Years = years;
-                    specializations[specialization.Name] = specialization;
-
+                    faculty.Specializations = specializations;
                 }
-
-                faculty.Specializations = specializations;
-
                 fireBaseData.Faculties.Add(faculty);
             }
         }
         else Debug.LogError("Data not foundit: LoadingForName, facultiesReferenceList");
 
+        if (baseGroupLoad != null)
+        {
+            DatabaseReference groupReference = await SearchGroupReference(baseGroupLoad);
+            if (groupReference != null)
+            {
+                int idFaculty = fireBaseData.Faculties.FindIndex(obj=>obj.Name == facultyName);
+                Faculty faculty = fireBaseData.Faculties[idFaculty];
+                faculty.Specializations.TryGetValue(GroupNameDat[1], out Specialization specialization);
+                if (specialization == null)
+                {
+                    specialization = new Specialization() { Name = GroupNameDat[1] };
+                    faculty.Specializations[GroupNameDat[1]] = specialization;
+                }
+                specialization.Years.TryGetValue(GroupNameDat[0], out Year year);
+                if (year == null) {
+                    year = new Year() { Name = GroupNameDat[0] };
+                    specialization.Years[GroupNameDat[0]] = year;
+                }
+                await FillGroup(baseGroupLoad,groupReference, year.Groups, startDateTime, endDateTime);
 
+            }
+            else
+            {
+                return false;
+            }
+        }
         return true;
     }
 
@@ -351,7 +376,7 @@ public class FireBase
             return 0;
         }
     }
-    private List<DatabaseReference> GetDatesReference(DatabaseReference reference, DateTime startDateTime, DateTime endDateTime) {
+    private List<DatabaseReference> GetDatesReference(DatabaseReference reference, DateTime? startDateTime, DateTime? endDateTime) {
         try
         {
             DatabaseReference dateReference = reference.Child(Dates.Key);
@@ -359,9 +384,9 @@ public class FireBase
             List<DatabaseReference> dates = new();
             if (endDateTime - startDateTime < new TimeSpan(93, 0, 0, 0))
             {
-                for (DateTime dateTime = startDateTime; dateTime <= endDateTime; dateTime += new TimeSpan(1, 0, 0, 0))
+                for (DateTime? dateTime = startDateTime; dateTime <= endDateTime; dateTime += new TimeSpan(1, 0, 0, 0))
                 {
-                    dates.Add(dateReference.Child(dateTime.Day + "-" + dateTime.Month + "-" + dateTime.Year));
+                    dates.Add(dateReference.Child(dateTime?.Day + "-" + dateTime?.Month + "-" + dateTime?.Year));
                 }
             }
             return dates;
@@ -394,7 +419,7 @@ public class FireBase
         {
             if(idFaculty == null)
             {
-                string[] groupData = FormingTabelDate.ConverterGroupNameData(name);
+                string[] groupData = RedactSearchText.ConverterGroupNameData(name);
                 if(groupData[2] != null)
                 {
                     idSpecialization = groupData[1];
@@ -598,7 +623,7 @@ public class FireBase
     private async Task<string> FindFaculty(string name) {
         string FacultyNameDefould = "New";
 
-        string[] groupData = FormingTabelDate.ConverterGroupNameData(name);
+        string[] groupData = RedactSearchText.ConverterGroupNameData(name);
 
         List<DatabaseReference> facultyReferenceList = await GetChiledsAsync(reference, Faculty.key);
 
@@ -614,7 +639,7 @@ public class FireBase
 
     }
     public async Task<DatabaseReference> SearchGroupReference(string name) {
-        string[] groupData = FormingTabelDate.ConverterGroupNameData(name);
+        string[] groupData = RedactSearchText.ConverterGroupNameData(name);
 
         List<DatabaseReference> facultyReferenceList = await GetChiledsAsync(reference, Faculty.key);
 
@@ -622,14 +647,15 @@ public class FireBase
         {
             DatabaseReference specializationReference = facultyReference.Child(Specialization.key).Child(groupData[1]);
 
-                List<DatabaseReference> GroupReferenceList = await GetChiledsAsync(specializationReference.Child(Year.key).Child(groupData[0]), Group.key);
-                foreach (var GroupReference in GroupReferenceList)
+            List<DatabaseReference> GroupReferenceList = await GetChiledsAsync(specializationReference.Child(Year.key).Child(groupData[0]), Group.key);
+            foreach (var GroupReference in GroupReferenceList)
+            {
+                if ((await ReadValue(GroupReference.Child(Group.Key_NAME))).ToString() == groupData[2])
                 {
-                    if ((await ReadValue(GroupReference.Child(Group.Key_NAME))).ToString() == groupData[2])
-                    {
-                        return GroupReference;
-                    }
+                    facultyName = facultyReference.Key;
+                    return GroupReference;
                 }
+            }
         }
 
         return null;

@@ -1,0 +1,246 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="AddDataFireBaseTest" Collapsed="true">
+    <Position X="2.5" Y="0.5" Width="1.5" />
+    <NestedTypes>
+      <Class Name="AddDataFireBaseTest.specialization" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Assets\App\Scripts\AddDataFireBaseTest.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AAAQAAAAACQAAAQAAAAAAAgAAAAAAIAAAAAAAAAAAAA=</HashCode>
+      <FileName>Assets\App\Scripts\AddDataFireBaseTest.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="DateParse" Collapsed="true">
+    <Position X="6" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAQAAAAAAA=</HashCode>
+      <FileName>Assets\App\Scripts\Data\DateParse.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="FormingTabelDate" Collapsed="true">
+    <Position X="6" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAgAIAAQCCAAAAAAAAAAABAAAAAQAAAyBAAAAAAAAA=</HashCode>
+      <FileName>Assets\App\Scripts\Data\FormingTabelDate.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="GroupParsing" Collapsed="true">
+    <Position X="9.5" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAABEAAAQAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Assets\App\Scripts\Data\GroupParsing.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Lesson" Collapsed="true">
+    <Position X="2.5" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAQAAAAAAAQA=</HashCode>
+      <FileName>Assets\App\Scripts\Data\Lesson.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TableTextCell" Collapsed="true">
+    <Position X="9.5" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAEAAAGCAIAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Assets\App\Scripts\Data\TableTextCell.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Diagram" Collapsed="true">
+    <Position X="9.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Assets\App\Scripts\Diagram.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Dates" Collapsed="true">
+    <Position X="7.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAAAAAAAAAAAABAAAAAAAAAAAAA=</HashCode>
+      <FileName>Assets\App\Scripts\FireBase\Data\Dates.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Faculty" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="11.25" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAIAQAAAAEAAQAAAAAAAAAAAAAAAAAAEA=</HashCode>
+      <FileName>Assets\App\Scripts\FireBase\Data\Faculty.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="FireBaseData" Collapsed="true">
+    <Position X="4.25" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AQAAAABAAAAAAAAEIAAAAAQAAAAAAAAAAAgAAAAiAAA=</HashCode>
+      <FileName>Assets\App\Scripts\FireBase\Data\FireBaseData.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Group" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="7.75" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAIAAAAAAAAAIAQAAAAEAAQAAAAAAAAAAAAAAAACAAA=</HashCode>
+      <FileName>Assets\App\Scripts\FireBase\Data\Group.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="LessonFireBase" Collapsed="true">
+    <Position X="4.25" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAgAQAAAIAQQAAAAAAQAAAABAAAAQAAAAAAAAAA=</HashCode>
+      <FileName>Assets\App\Scripts\FireBase\Data\Lesson.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Specialization" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="6" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAIAQAAAAEAAQAAAAAIAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Assets\App\Scripts\FireBase\Data\Specialization.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="Student" Collapsed="true">
+    <Position X="9.5" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAoAQAAAAAAAQAAAAAAAAAAAAAAAAAAEA=</HashCode>
+      <FileName>Assets\App\Scripts\FireBase\Data\Student.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="StudentMissing" Collapsed="true">
+    <Position X="6" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAQAAAgAQAAAAAAAAAAAAAAAAAAQAAAAAAAEA=</HashCode>
+      <FileName>Assets\App\Scripts\FireBase\Data\StudentMissing.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Year" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="4.25" Y="5.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAEAAAAAAIAQAAAAEAAQAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Assets\App\Scripts\FireBase\Data\Year.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="FireBase" Collapsed="true">
+    <Position X="2.5" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ABABGAAAFBAIiCgIAAgCAAAAYAAgkARBAAQAACAAAAU=</HashCode>
+      <FileName>Assets\App\Scripts\FireBase\FireBase.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Parsing" Collapsed="true">
+    <Position X="9.5" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAaAgAAACMHCAQAAAAFKCCAAAABAAAAQAAMgAECAEA=</HashCode>
+      <FileName>Assets\App\Scripts\Parsing.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AttendanceDocFiller" Collapsed="true">
+    <Position X="4.25" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAoAAICAAAAECAAAAEABAEEEAAFAAEAACQQAABACAQA=</HashCode>
+      <FileName>Assets\App\Scripts\Reports\AttendanceDocFiller.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="StudentAttendance" Collapsed="true">
+    <Position X="11.25" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAgAAAEAAACIAAAAAAAAAAAAAAQAAAAAAABIAAAAA=</HashCode>
+      <FileName>Assets\App\Scripts\Reports\StudentAttendance.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="StudentJustificationDocument" Collapsed="true">
+    <Position X="2.5" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAQAAAAAgAAAAQAwAAAAAIA=</HashCode>
+      <FileName>Assets\App\Scripts\Reports\StudentJustificationDocument.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="StudentMakeupEntry" Collapsed="true">
+    <Position X="4.25" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAQAIAAAIAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Assets\App\Scripts\Reports\StudentMakeupEntry.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Word" Collapsed="true">
+    <Position X="2.5" Y="5.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAEIQAAAAABAACAAAAAAAAAAAEAAAAAEAAAAAAAEA=</HashCode>
+      <FileName>Assets\App\Scripts\Reports\Word.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="SearchGroup" Collapsed="true">
+    <Position X="11.25" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAgAAgAACAQCAIBAAECACABAAAAADCAEEAIAAYggAA=</HashCode>
+      <FileName>Assets\App\Scripts\SearchGroup.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="SelectCells" Collapsed="true">
+    <Position X="2.5" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACgAAQgKAAAAAAgAAAAAAAAAAAAAAAACAIIAAAhAA=</HashCode>
+      <FileName>Assets\App\Scripts\Select\SelectCells.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="SizeSinxron" Collapsed="true">
+    <Position X="4.25" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Assets\App\Scripts\SizeSinxron.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="StartLoadingData" Collapsed="true">
+    <Position X="7.75" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAACAAAAAAEAAAAAAAAACAAAAAAAAAEAAAAEA=</HashCode>
+      <FileName>Assets\App\Scripts\StartLoadingData.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="GroupRedactor" Collapsed="true">
+    <Position X="11.25" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAQAAAAAEA=</HashCode>
+      <FileName>Assets\App\Scripts\Tab Switch\GroupRedactor\GroupRedactor.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="LoadingGroupToRedactor" Collapsed="true">
+    <Position X="6" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAADAAAAAAAAAAIAQIAAAAAAAAAAAAAAAAAAEA=</HashCode>
+      <FileName>Assets\App\Scripts\Tab Switch\GroupRedactor\LoadingGroupToRedactor.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="OpenGroupRedactor" Collapsed="true">
+    <Position X="7.75" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAADQCAAAAAAAAAAAEAAAAQABAAAAAAEA=</HashCode>
+      <FileName>Assets\App\Scripts\Tab Switch\GroupRedactor\OpenGroupRedactor.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TabsSwitcher" Collapsed="true">
+    <Position X="11.25" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AIAAAoAAgCAAIhAAIEAAAAgAACgAAAAARgAAAIAAAEA=</HashCode>
+      <FileName>Assets\App\Scripts\Tab Switch\TabsSwitcher.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TableObjectData" Collapsed="true">
+    <Position X="7.75" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>IIAAIWoAACAAEAAAAIgCQARIAAAACAiCCDAAIAAAAkA=</HashCode>
+      <FileName>Assets\App\Scripts\TableData\TableObjectData.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Interface Name="IFireBaseData" Collapsed="true">
+    <Position X="2.5" Y="6.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAAAAAQAAAAAAAAAAAAAQAAAAAA=</HashCode>
+      <FileName>Assets\App\Scripts\FireBase\Data\IFireBaseData.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

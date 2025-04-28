@@ -7,5 +7,5 @@ public class Year : IFireBaseData
     public const string Key_NAME = "Name";
     public string Name { get; set; }
 
-    public Dictionary<string, Group> Groups;
+    public Dictionary<string, Group> Groups = new();
 }

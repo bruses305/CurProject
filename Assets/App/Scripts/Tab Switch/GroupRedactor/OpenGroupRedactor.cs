@@ -3,14 +3,20 @@ using System.Threading.Tasks;
 using Unity.VisualScripting;
 using UnityEngine;
 
-public static class OpenGroupRedactor
+public class OpenGroupRedactor : MonoBehaviour
 {
-    [SerializeField] private static GameObject parentGroupsRedactor;
-    [SerializeField] private static GameObject Redactor;
+    public static OpenGroupRedactor Instance;
+    [SerializeField] private GameObject parentGroupsRedactor;
+    [SerializeField] private GameObject Redactor;
+    [SerializeField] private Transform imageIconList;
     public static event EventHandler LoadingEnd;
     private const int ID_WINDOW = 5;
+    private void Awake() {
+        Instance = this;
+    }
     public static void ActivateListGroups() {
-        parentGroupsRedactor.SetActive(!parentGroupsRedactor.activeSelf);
+        Instance.imageIconList.rotation = !Instance.parentGroupsRedactor.activeSelf ? new(0, 0, 0, 0) : new(0, 0, -90, 0);
+        Instance.parentGroupsRedactor.SetActive(!Instance.parentGroupsRedactor.activeSelf);
     }
     public async static void LoadingRedactor(string groupName) {
         TabsSwitcher.Instance.SwitchTabID(ID_WINDOW);

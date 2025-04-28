@@ -11,11 +11,10 @@ using System.Collections;
 
 public class FormingTabelDate : MonoBehaviour
 {
-    [SerializeField] Parsing parsing;
     [SerializeField] TableObjectData tableObjectData;
     private TableTextCell tableTextCell => tableObjectData.tableTextCell;
     private void Start() {
-        parsing.PageEvent += EventFormingTable;
+        Parsing.PageEvent += EventFormingTable;
     }
 
     private void EventFormingTable(object sender, EventArgs e) {
@@ -30,7 +29,7 @@ public class FormingTabelDate : MonoBehaviour
 
 
         PasteGroupName(groupParsing.Name); // присваиваем группу
-        string[] groupNameData = ConverterGroupNameData(groupParsing.Name);
+        string[] groupNameData = RedactSearchText.ConverterGroupNameData(groupParsing.Name);
 
         if (groupNameData == null) return;
 
@@ -108,32 +107,6 @@ public class FormingTabelDate : MonoBehaviour
         }
         StartCoroutine(timerReloadingTable());
 
-    }
-
-
-    public static string[] ConverterGroupNameData(string GroupName) { //0-год 1-специальность 2-группа
-        try
-        {
-            if (GroupName == null) return new string[3] { null, null, null };
-            int yearName = Convert.ToInt32(GroupName.Substring(0, 2));
-            int index = GroupName.IndexOf('-');
-            string specializationName;
-            string groupName = null;
-            if (index >= 2)
-            {
-                specializationName = GroupName.Substring(2, index - 2);
-                groupName = GroupName.Substring(index + 1);
-            }
-            else
-            {
-                specializationName = GroupName.Substring(2);
-            }
-            return new string[3] { yearName.ToString(), specializationName, groupName };
-        }
-        catch
-        {
-            return new string[3] { null, null, null };
-        }
     }
     private TypeCellN SerchStudentCell(Group group, GroupParsing groupParsing, int idDate, int idColumn, int idCell) {
         string date = groupParsing.dateParses[idDate].dateTime;

@@ -9,12 +9,13 @@ using System.Collections;
 using System.Threading;
 using System.Reflection;
 using Firebase.Database;
+using Unity.VisualScripting.Antlr3.Runtime;
 
 public class Parsing : MonoBehaviour
 {
     public static Parsing Instance;
     public FireBase fireBase = new();
-    public event EventHandler PageEvent;
+    public static event EventHandler PageEvent;
     public static Dictionary<string, GroupParsing> ParsingData1 = new();
     private GroupParsing ParsingDataDefould { get; set; }
 
@@ -38,7 +39,7 @@ public class Parsing : MonoBehaviour
 
     }
     private async void Start() {
-        fireBase.ParsingFireBaseEnd += ParsingWebSite;
+        FireBase.ParsingFireBaseEnd += ParsingWebSite;
         await LoadingDefouldData(parsingGroupName, true);
     }
 
@@ -54,18 +55,21 @@ public class Parsing : MonoBehaviour
         do
         {
             Debug.Log("StartDefouldParsing");
-            bool FB = await TimeTrigger(fireBase.LoadingData(parsGroupName));  //нужно реализовать чтобы данные о пройденных занятиях подключались к GroupParsing2 а потом и к GroupParssing1 при полном парсинге
-            ParsingDataDefould = await TimeTrigger(ParsingMetod(parsGroupName, isUpdate));
-            if (ParsingDataDefould != default(GroupParsing))
+            bool FB = await TimeTrigger(fireBase.LoadingData(parsGroupName), 10);  //нужно реализовать чтобы данные о пройденных занятиях подключались к GroupParsing2 а потом и к GroupParssing1 при полном парсинге
+            
+            if (FB)
             {
-                if (!FB)
+                ParsingDataDefould = await TimeTrigger(ParsingMetod(parsGroupName, isUpdate));
+                if (ParsingDataDefould != default(GroupParsing))
                 {
-                    await fireBase.CreateGroup(ParsingDataDefould.Name);
+                    //await fireBase.CreateGroup(ParsingDataDefould.Name);
+
+                    ParsingData1[parsGroupName].MergingObjectDate(ParsingDataDefould?.dateParses);
+                    Debug.Log("EndDefouldParsing");
+                    PageEvent.Invoke(this, EventArgs.Empty);  // вызов инвента на обновление таблицы
+                                                              //ивент на закрытие загрузочного экрана
+                    return;
                 }
-                ParsingData1[parsGroupName].MergingObjectDate(ParsingDataDefould.dateParses);
-                PageEvent.Invoke(this, EventArgs.Empty);  // вызов инвента на обновление таблицы
-                                                          //ивент на закрытие загрузочного экрана
-                return;
             }
             countParsingFail++;
         }
@@ -116,8 +120,7 @@ public class Parsing : MonoBehaviour
         GroupParsing groupParsing = new();
         groupParsing.Name = GroupName;
 
-        string datePars_Now = dateTime_Now.Year + "-" + dateTime_Now.Month + "-" + dateTime_Now.Day;
-        string GroupAndDate = "group=" + GroupName + "&day=" + datePars_Now;
+        string GroupAndDate = "group=" + GroupName + "&day=";
 
         try
         {
@@ -153,8 +156,7 @@ public class Parsing : MonoBehaviour
                 }
             }
 
-            if (groupParsing.dateParses.Count > 0) return groupParsing;
-            return null;
+            return groupParsing;
         }
         catch (Exception e)
         {
@@ -178,7 +180,7 @@ public class Parsing : MonoBehaviour
     private async Task<List<DateParse>> WorkingTabelsType2(HtmlNode table, string groupName, bool updateData, DateTime? endDateTime) {
         List<DateParse> dateParses = new();
         DatabaseReference referenceGroup = !updateData? null:await fireBase.SearchGroupReference(groupName);
-        Debug.Log(groupName);
+
         if (table != null)
         {
 
@@ -192,7 +194,7 @@ public class Parsing : MonoBehaviour
                     DateTime timeLesson = ConvertStringToDateTime(DateNodesName[i]);
                     if (NodesAdd == int.MaxValue && (timeLesson >= DateTime.Today && timeLesson <= endDateTime))
                         NodesAdd = i;
-                    if (timeLesson >= DateTime.Today && timeLesson<= endDateTime)
+                    if (timeLesson >= DateTime.Today && timeLesson <= endDateTime)
                         dateParses.Add(new DateParse { dateTime = (timeLesson.Day + "-" + timeLesson.Month + "-" + timeLesson.Year) });
                 }
 
@@ -258,20 +260,20 @@ public class Parsing : MonoBehaviour
     }
     private async Task<T> TimeTrigger<T>(Task<T> task, float timeOut = 10f) {
         CancellationTokenSource cancelTokenSource = new CancellationTokenSource();
-
-        Coroutine corotine = StartCoroutine(ResourceTickOver(cancelTokenSource, task.ToString(), timeOut));
+        Task<T> task1 = Task.Run(() => task, cancelTokenSource.Token);
+        //Coroutine corotine = StartCoroutine(ResourceTickOver(cancelTokenSource, task.ToString(), timeOut));
         T Data = default(T);
 
         try
         {
-            Data = await Task.Run(() => task, cancelTokenSource.Token);
+            Data = await task1;
         }
         catch
         {
             Debug.Log("Error Connecting");
         }
-
-        StopCoroutine(corotine);
+        cancelTokenSource.Dispose();
+        //StopCoroutine(corotine);
         Debug.Log(Data);
         return Data;
     }
