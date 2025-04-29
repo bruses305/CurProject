@@ -161,7 +161,7 @@ public class FireBase
                                 studentsMissing.Add(studentMissing);
                             }
 
-                            lesson.StudentMissings = studentsMissing;
+                            lesson.StudentsMissing = studentsMissing;
                             lessons.Add(lesson);
                         }
                         else Debug.LogError("Data not foundit: LoadingForName, studentsMissingReference");
@@ -213,7 +213,7 @@ public class FireBase
             startDateTime = defouldStartParsing;
             endDateTime = defouldEndParsing;
         }
-        string[] GroupNameDat = RedactSearchText.ConverterGroupNameData(baseGroupLoad).ToArray(); //0-год 1-специальность 2-группа
+        string[] GroupNameDat = RedactSearchText.ConverterGroupNameData(baseGroupLoad).ToArray(); //0-пїЅпїЅпїЅ 1-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ 2-пїЅпїЅпїЅпїЅпїЅпїЅ
         
             if (GroupNameDat.Length != 3) return false;
 
@@ -230,12 +230,12 @@ public class FireBase
                 if (baseGroupLoad == null)
                 {
                     Dictionary<string, Specialization> specializations = new();
-                    List<DatabaseReference> specializationReferenceList = await ParsClassData(facultyReference, specializations/*, GroupNameDat, 1*/); // 1 - специальность
+                    List<DatabaseReference> specializationReferenceList = await ParsClassData(facultyReference, specializations/*, GroupNameDat, 1*/); // 1 - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 
                     foreach (DatabaseReference specializationReference in specializationReferenceList)
                     {
                         Dictionary<string, Year> years = new();
-                        List<DatabaseReference> yearReferenceList = await ParsClassData(specializationReference, years/*, GroupNameDat, 0*/, true, 25 - 3); // 0 - год  25 - текущий год
+                        List<DatabaseReference> yearReferenceList = await ParsClassData(specializationReference, years/*, GroupNameDat, 0*/, true, 25 - 3); // 0 - пїЅпїЅпїЅ  25 - пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ
 
                         specializations.TryGetValue(specializationReference.Key, out Specialization specialization);
 
@@ -243,7 +243,7 @@ public class FireBase
                         {
 
                             Dictionary<string, Group> groups = new();
-                            List<DatabaseReference> groupReferenceList = await ParsClassData(yearReference, groups/*, GroupNameDat, 2*/); // 2 - группа
+                            List<DatabaseReference> groupReferenceList = await ParsClassData(yearReference, groups/*, GroupNameDat, 2*/); // 2 - пїЅпїЅпїЅпїЅпїЅпїЅ
 
                             years.TryGetValue(yearReference.Key, out Year year);
 

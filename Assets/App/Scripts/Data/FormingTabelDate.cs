@@ -28,7 +28,7 @@ public class FormingTabelDate : MonoBehaviour
         //TableObjectData.FormingTableCell(LoadingDataFireBase.StrudentName[Page].Count, Converter(groupParsing));
 
 
-        PasteGroupName(groupParsing.Name); // присваиваем группу
+        PasteGroupName(groupParsing.Name); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
         string[] groupNameData = RedactSearchText.ConverterGroupNameData(groupParsing.Name);
 
         if (groupNameData == null) return;
@@ -74,7 +74,7 @@ public class FormingTabelDate : MonoBehaviour
         else { Debug.LogError("Fail Loading Group"); }
 
 
-        for (int idCell = 0; idCell < tableTextCell.TableDateCell.Count && idCell < groupParsing.dateParses.Count; idCell++) // добавляем даты
+        for (int idCell = 0; idCell < tableTextCell.TableDateCell.Count && idCell < groupParsing.dateParses.Count; idCell++) // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
         {
             TextMeshProUGUI CellDate = tableTextCell.TableDateCell[idCell];
 
@@ -102,7 +102,7 @@ public class FormingTabelDate : MonoBehaviour
                 {
                     TypeCellN typeCellN = SerchStudentCell(group, groupParsing, idDate, idColumn, idCell);
                     CellTextN(tableTextCell.TableCell[idDate][idColumn][idCell], typeCellN);
-                }//вывод N*/
+                }//пїЅпїЅпїЅпїЅпїЅ N*/
             }
         }
         StartCoroutine(timerReloadingTable());
@@ -112,7 +112,7 @@ public class FormingTabelDate : MonoBehaviour
         string date = groupParsing.dateParses[idDate].dateTime;
         group.Dates.TryGetValue(date, out Dates dates);
         string lesson = groupParsing.dateParses[idDate].Lessons[idColumn];
-        StudentMissing student = dates?.lessons[idColumn].StudentMissings.FirstOrDefault(student => student.ID == idCell);
+        StudentMissing student = dates?.lessons[idColumn].StudentsMissing.FirstOrDefault(student => student.ID == idCell);
         if (student == default(StudentMissing))
             return TypeCellN.no;
         else if (student.Type == true)

@@ -9,11 +9,11 @@ public class LessonFireBase
     public string Name { get; set; }
     public TypeLesson type { get; set; }
 
-    public List<StudentMissing> StudentMissings = new();
+    public List<StudentMissing> StudentsMissing = new();
 
     public enum TypeLesson {
         Lecture,
-        Laborator, 
+        Laboratory, 
         Practice, 
         Curatorial, 
         PhysicalEducation
@@ -23,27 +23,27 @@ public class LessonFireBase
         type = type.ToUpper();
         switch (type)
         {
-            case "À«":
+            case "–õ–ó":
                 return TypeLesson.Lecture;
-            case "À≈ ":
+            case "–õ–ï–ö":
                 return TypeLesson.Lecture;
-            case "À¡«":
-                return TypeLesson.Laborator;
-            case "À¿¡":
-                return TypeLesson.Laborator;
-            case "œ«":
+            case "–õ–ë–ó":
+                return TypeLesson.Laboratory;
+            case "–õ–ê–ë":
+                return TypeLesson.Laboratory;
+            case "–ü–ó":
                 return TypeLesson.Practice;
-            case "œ–¿ ":
+            case "–ü–†–ê–ö":
                 return TypeLesson.Practice;
-            case " «":
+            case "–ö–ó":
                 return TypeLesson.Curatorial;
-            case "»Õ‘Œ–Ã¿÷»ŒÕÕ€… ◊¿—":
+            case "–ò–ù–§–û–†–ú–ê–¶–ò–û–ù–ù–´–ô –ß–ê–°":
                 return TypeLesson.Curatorial;
-            case " ”–¿“Œ–— »… ◊¿—":
+            case "–ö–£–†–ê–¢–û–†–°–ö–ò–ô –ß–ê–°":
                 return TypeLesson.Curatorial;
-            case "‘»«»◊≈— ¿ﬂ  ”À‹“”–¿":
+            case "–§–ò–ó–ò–ß–ï–°–ö–ê–Ø –ö–£–õ–¨–¢–£–†–ê":
                 return TypeLesson.PhysicalEducation;
-            case "‘«":
+            case "–§–ó":
                 return TypeLesson.PhysicalEducation;
             default:
                 return TypeLesson.Lecture;
@@ -54,17 +54,17 @@ public class LessonFireBase
         switch (type)
         {
             case TypeLesson.Lecture:
-                return "À«";
-            case TypeLesson.Laborator:
-                return "À¡«";
+                return "–õ–ó";
+            case TypeLesson.Laboratory:
+                return "–õ–ë–ó";
             case TypeLesson.Practice:
-                return "œ«";
+                return "–ü–ó";
             case TypeLesson.Curatorial:
-                return " «";
+                return "–ö–ó";
             case TypeLesson.PhysicalEducation:
-                return "‘«";
+                return "–§–ó";
             default:
-                return "À«";
+                return "–õ–ó";
         }
     }
 }
