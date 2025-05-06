@@ -9,6 +9,7 @@ using System.Collections;
 using System.Threading;
 using System.Reflection;
 using Firebase.Database;
+using Unity.VisualScripting;
 using Unity.VisualScripting.Antlr3.Runtime;
 
 public class Parsing : MonoBehaviour
@@ -24,23 +25,23 @@ public class Parsing : MonoBehaviour
     private const string POLESSU_URL_TYPE_2 = "https://www.polessu.by/ruz/ng/?";
     private const string POLESSU_FILE2 = ".//div[@class='container']";
     private const string GroupNamePlayerPrefs = "GROUP_NAME";
-    public static string parsingGroupName = "22ИТ-3";
+    public static string ParsingGroupName = "22РРў-3";
     private DateTime dateTime_Now = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day);
-    private DateTime defouldEndDateTime = DateTime.Today + new TimeSpan(3,0,0,0);
+    private DateTime defouldEndDateTime = DateTime.Today;
 
 
     private void Awake() {
         Instance = this;
         if (PlayerPrefs.HasKey(GroupNamePlayerPrefs))
-            parsingGroupName = PlayerPrefs.GetString(GroupNamePlayerPrefs);
+            ParsingGroupName = PlayerPrefs.GetString(GroupNamePlayerPrefs);
         else
-            PlayerPrefs.SetString(GroupNamePlayerPrefs, parsingGroupName);
+            PlayerPrefs.SetString(GroupNamePlayerPrefs, ParsingGroupName);
         fireBase.Initialized();
 
     }
     private async void Start() {
         FireBase.ParsingFireBaseEnd += ParsingWebSite;
-        await LoadingDefouldData(parsingGroupName, true);
+        await LoadingDefouldData(ParsingGroupName, true);
     }
 
     private void ParsingWebSite(object sender, EventArgs e) {
@@ -50,24 +51,25 @@ public class Parsing : MonoBehaviour
     public async void ButtonEventLoadingAllData() {
         await Task.Run(fireBase.LoadingAllData);
     }
-    public async Task LoadingDefouldData(string parsGroupName, bool isUpdate = false) {
+    public async Task LoadingDefouldData(string parsGroupName, bool isUpdate = false,DateTime? dateStart = null, DateTime? dateEnd = null) {
         int countParsingFail = 0;
         do
         {
             Debug.Log("StartDefouldParsing");
-            bool FB = await TimeTrigger(fireBase.LoadingData(parsGroupName), 10);  //нужно реализовать чтобы данные о пройденных занятиях подключались к GroupParsing2 а потом и к GroupParssing1 при полном парсинге
+            bool FB = await TimeTrigger(fireBase.LoadingData(parsGroupName,dateStart, dateEnd), 10); 
             
             if (FB)
             {
-                ParsingDataDefould = await TimeTrigger(ParsingMetod(parsGroupName, isUpdate));
-                if (ParsingDataDefould != default(GroupParsing))
+                ParsingDataDefould = await TimeTrigger(ParsingMetod(parsGroupName, isUpdate, dateEnd));
+                if (ParsingDataDefould != null)
                 {
                     //await fireBase.CreateGroup(ParsingDataDefould.Name);
-
+                    PlayerPrefs.SetString(GroupNamePlayerPrefs, parsGroupName);
+                    ParsingGroupName = parsGroupName;
                     ParsingData1[parsGroupName].MergingObjectDate(ParsingDataDefould?.dateParses);
                     Debug.Log("EndDefouldParsing");
-                    PageEvent.Invoke(this, EventArgs.Empty);  // вызов инвента на обновление таблицы
-                                                              //ивент на закрытие загрузочного экрана
+                    PageEvent.Invoke(this, EventArgs.Empty);  
+                                                             
                     return;
                 }
             }
@@ -75,7 +77,7 @@ public class Parsing : MonoBehaviour
         }
         while (countParsingFail < FAIL_LIMIT);
 
-        // сделать чтобы пыталось повторно подключиться к fireBase
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ fireBase
         Debug.LogError("Error Loading Data");
 
     }
@@ -115,7 +117,7 @@ public class Parsing : MonoBehaviour
     }
 
     private async Task<GroupParsing> ParsingMetod(string GroupName, bool updateData, DateTime? endDateTime = null) {
-        if (endDateTime == null) endDateTime = defouldEndDateTime;
+        endDateTime ??= defouldEndDateTime;
 
         GroupParsing groupParsing = new();
         groupParsing.Name = GroupName;
@@ -179,103 +181,137 @@ public class Parsing : MonoBehaviour
     }
     private async Task<List<DateParse>> WorkingTabelsType2(HtmlNode table, string groupName, bool updateData, DateTime? endDateTime) {
         List<DateParse> dateParses = new();
-        DatabaseReference referenceGroup = !updateData? null:await fireBase.SearchGroupReference(groupName);
+        ListAndInt<DateParse> dateParsesNotLoading = new(){DatList = new List<DateParse>(), IntList = new List<int>()};
+        DatabaseReference groupReference = !updateData? null:await fireBase.SearchGroupReference(groupName);
 
         if (table != null)
         {
 
             HtmlNodeCollection dateNodesName = table.SelectNodes(".//small[@class='text-muted']");
-            if (dateNodesName != null && dateNodesName.Count > 1)
+            if (dateNodesName is { Count: > 1 })
             {
-                List<string> DateNodesName = ConvertToCollectionString(dateNodesName, new() {0}); // сохраняет даты на которые стоит расписание
+                List<string> DateNodesName = ConvertToCollectionString(dateNodesName, new() {0}); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
                 int NodesAdd = int.MaxValue;
                 for (int i = 0;i< DateNodesName.Count;i++)
                 {
                     DateTime timeLesson = ConvertStringToDateTime(DateNodesName[i]);
-                    if (NodesAdd == int.MaxValue && (timeLesson >= DateTime.Today && timeLesson <= endDateTime))
-                        NodesAdd = i;
+                    string dateString = timeLesson.Day + "-" + timeLesson.Month + "-" + timeLesson.Year;
+                    if (timeLesson < DateTime.Today && await fireBase.isCreatingDate(dateString, groupReference))
+                        dateParsesNotLoading.Add(new DateParse { dateTime = dateString }, i);
                     if (timeLesson >= DateTime.Today && timeLesson <= endDateTime)
-                        dateParses.Add(new DateParse { dateTime = (timeLesson.Day + "-" + timeLesson.Month + "-" + timeLesson.Year) });
+                    {
+                        dateParses.Add(new DateParse { dateTime = dateString });
+                        if (NodesAdd == int.MaxValue)
+                            NodesAdd = i;
+                    }
                 }
 
-                HtmlNodeCollection DateNodes = table.SelectNodes(".//div[@class='row acty-group']"); // все строки tbody
-                if (DateNodes != null && DateNodes.Count > 0)
+                HtmlNodeCollection DateNodes = table.SelectNodes(".//div[@class='row acty-group']"); // пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ tbody
+                if (DateNodes is { Count: > 0 })
                 {
-                    for (int DateID = 0; DateID + NodesAdd < DateNodes.Count; DateID++)
+                    for (int DateID = 0, DateNotFound = 0; (DateID + NodesAdd < DateNodes.Count && DateID < dateParses.Count) || DateNotFound < dateParsesNotLoading.Count; DateID++, DateNotFound++)
                     {
-                        HtmlNodeCollection LessonsNodes = DateNodes[DateID + NodesAdd].SelectNodes(".//div[@class='acty-item clearfix']");
-                        List<HtmlNode> LessonNodes = new();
-                        List<HtmlNode> LessonsTypeNodes = new();
-                        foreach (var LessonsNode in LessonsNodes)
-                        {
-                            LessonNodes.Add(LessonsNode.SelectSingleNode(".//span[@class='acty-subjects']"));
-
-                            if(LessonsNode.SelectSingleNode(".//span[@title]") == null)
-                                LessonsTypeNodes.Add(LessonsNode.SelectSingleNode(".//span[@class='acty-subjects']"));
-                            else
-                                LessonsTypeNodes.Add(LessonsNode.SelectSingleNode(".//span[@title]"));
-                        }
-
+                        bool isNotFound = DateNotFound < dateParsesNotLoading.Count;
+                        int idDate = isNotFound ? dateParsesNotLoading.IntList[DateNotFound] : DateID + NodesAdd;
+                        if (isNotFound) DateID--;
+                        else DateNotFound--;
+                        IList<DateParse> dateParsesTime = isNotFound ? dateParsesNotLoading.DatList : dateParses;
+                        DateFill(DateNodes[idDate],out List<HtmlNode> LessonNodes,out List<HtmlNode> LessonTypeNodes);
+                        idDate -= isNotFound ? 0 : NodesAdd;
+                        Debug.Log(idDate);
                         if (LessonNodes != null && LessonNodes.Count > 0)
                         {
                             List<string> LessonsName = ConvertToCollectionString(LessonNodes);
-                            if (updateData) {
+                            if (updateData)
+                            {
                                 List<LessonFireBase.TypeLesson> LessonsType = new();
-                                ConvertToCollectionString(LessonsTypeNodes).ForEach(obj => LessonsType.Add(LessonFireBase.isTypeLesson(obj)));
+                                ConvertToCollectionString(LessonTypeNodes).ForEach(obj => LessonsType.Add(LessonFireBase.isTypeLesson(obj)));
 
                                 if (LessonsType.Count == LessonsName.Count) {
-                                    await fireBase.CreateLesson(LessonsName, LessonsType, dateParses[DateID].dateTime, referenceGroup);
+                                    await fireBase.CreateLesson(LessonsName, LessonsType, dateParsesTime[idDate].dateTime, groupReference);
                                 }
                             }
-                            LessonsName.ForEach(obj => dateParses[DateID].Lessons.Add(obj));
+                            LessonsName.ForEach(obj => dateParsesTime[idDate].Lessons.Add(obj));
                         }
                         else
                         {
-                            Debug.Log($"Занятий на {DateID} нету");
+                            Debug.Log($"пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ {idDate} пїЅпїЅпїЅпїЅ");
                         }
                     }
                 }
                 else
                 {
-                    Debug.LogError("Таблиц с данными о рассписании не существует");
+                    Debug.LogError("пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ");
                 }
             }
             else
             {
-                Debug.LogWarning("small[@class='text-muted дат не существует");
+                Debug.LogWarning("small[@class='text-muted пїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ");
             }
 
         }
         else
         {
-            Debug.LogWarning("Нет результата");
+            Debug.LogWarning("пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ");
         }
 
         return dateParses;
+    }
+
+    private class ListAndInt<T>
+    {
+        public IList<T> DatList;
+        public IList<int> IntList;
+        public int Count = 0;
+
+        public void Add(T dat, int id)
+        {
+            Count++;
+            DatList.Add(dat);
+            IntList.Add(id);
+        }
     }
     public static DateTime ConvertStringToDateTime(string data) {
 
         DateTime.TryParseExact(data, "d.M", null, System.Globalization.DateTimeStyles.None, out DateTime time);
         return time;
     }
+
+    private void DateFill(HtmlNode dateNode, out List<HtmlNode> lessonNodes, out List<HtmlNode> lessonsTypeNodes)
+    {
+        HtmlNodeCollection LessonsNodes = dateNode.SelectNodes(".//div[@class='acty-item clearfix']");
+        lessonNodes = new();
+        lessonsTypeNodes = new();
+        foreach (var LessonsNode in LessonsNodes)
+        {
+            lessonNodes.Add(LessonsNode.SelectSingleNode(".//span[@class='acty-subjects']"));
+
+            if (LessonsNode.SelectSingleNode(".//span[@title]") == null)
+                lessonsTypeNodes.Add(LessonsNode.SelectSingleNode(".//span[@class='acty-subjects']"));
+            else
+                lessonsTypeNodes.Add(LessonsNode.SelectSingleNode(".//span[@title]"));
+        }
+
+
+    }
+
     private async Task<T> TimeTrigger<T>(Task<T> task, float timeOut = 10f) {
         CancellationTokenSource cancelTokenSource = new CancellationTokenSource();
-        Task<T> task1 = Task.Run(() => task, cancelTokenSource.Token);
-        //Coroutine corotine = StartCoroutine(ResourceTickOver(cancelTokenSource, task.ToString(), timeOut));
-        T Data = default(T);
+        Coroutine corotine = StartCoroutine(ResourceTickOver(cancelTokenSource, typeof(T).ToString(), timeOut));;
+        T result = default(T);
 
         try
         {
-            Data = await task1;
+            //РЅР°СѓС‡РёС‚СЊСЃСЏ РѕС‚РєР»СЋС‡Р°С‚СЊ Task<T> РѕРґРµРєРІР°С‚РЅРѕ Р° РЅРµ С‚Рѕ РєР°Рє СЃРµР№С‡Р°СЃ
+            result = await Task.Run(() => task, cancelTokenSource.Token);
         }
         catch
         {
             Debug.Log("Error Connecting");
         }
-        cancelTokenSource.Dispose();
-        //StopCoroutine(corotine);
-        Debug.Log(Data);
-        return Data;
+        StopCoroutine(corotine);
+        Debug.Log(result);
+        return result;
     }
     IEnumerator ResourceTickOver(CancellationTokenSource token, string taskType = "", float waitTime = 10) {
         yield return new WaitForSeconds(waitTime);

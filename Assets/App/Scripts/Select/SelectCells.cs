@@ -1,4 +1,5 @@
 
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -7,6 +8,11 @@ using UnityEngine.UI;
 
 public class SelectCells : MonoBehaviour
 {
+    public bool isRedact = false;
+    [SerializeField] private FormingTabelDate formingTabelDate;
+    private Dictionary<Vector2Int,bool> SelectedCells => formingTabelDate.missingStudent;
+    private Dictionary<Vector2Int, bool> _localSelectedCells = new();
+    
     private Color colorSelect = new(45f / 255f, 60f / 255f, 63f / 255f);
     private Color colorBaseSelect = new(72f / 255f, 90f / 255f, 94f / 255f);
     private Color colorDefould = new(45f/255f, 42f / 255f, 63f / 255f);
@@ -20,18 +26,29 @@ public class SelectCells : MonoBehaviour
         ConvertToImage(((TableObjectData)sender).tableTextCell.TableNCell);
     }
     public void isPinned(PointerEventData data, Vector2Int position) {
-        if (position == positionPinned)
+        if (!isRedact)
         {
-            positionPinned = defouldPositionPinned;
+            if (position == positionPinned)
+            {
+                positionPinned = defouldPositionPinned;
+            }
+            else
+            {
+                if (positionPinned != defouldPositionPinned)
+                {
+                    UnSelectNCells(null, positionPinned);
+                    SelectNCells(null, position);
+                }
+
+                positionPinned = position;
+            }
         }
         else
         {
-            if (positionPinned != defouldPositionPinned)
-            {
-                UnSelectNCells(null, positionPinned);
-                SelectNCells(null, position);
-            }
-            positionPinned = position;
+            Debug.Log("default(Vector2Int)" + default(Vector2Int));
+            bool isActive = !SelectedCells.ContainsKey(position);
+            if (!_localSelectedCells.Remove(position)) _localSelectedCells[position] = isActive;
+            formingTabelDate.TimeMissing(position, isActive);
         }
     }
 

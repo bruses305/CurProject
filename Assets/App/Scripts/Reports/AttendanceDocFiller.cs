@@ -1,15 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 using UnityEngine;
 using Color = DocumentFormat.OpenXml.Wordprocessing.Color;
+using Debug = UnityEngine.Debug;
 using TypeJust = StudentJustificationDocument.TypeJust;
 
 public class AttendanceDocFiller : MonoBehaviour
 {
+    public bool isopenToEnd = false;
     private const int CM = 567;
     private const float TOPBODY = 0.75f;
     private const float BUTTONBODY = 0.5f;
@@ -109,6 +112,8 @@ public class AttendanceDocFiller : MonoBehaviour
                 mainPart.Document.Save();
                 CreateTitle3(body);
         }
+            
+            if(isopenToEnd) Process.Start(path);
         //}
         //catch
         //{

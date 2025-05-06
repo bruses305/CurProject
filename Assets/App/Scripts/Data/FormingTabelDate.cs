@@ -13,18 +13,20 @@ public class FormingTabelDate : MonoBehaviour
 {
     [SerializeField] TableObjectData tableObjectData;
     private TableTextCell tableTextCell => tableObjectData.tableTextCell;
+
+    public Dictionary<Vector2Int, bool> missingStudent;
     private void Start() {
         Parsing.PageEvent += EventFormingTable;
     }
 
     private void EventFormingTable(object sender, EventArgs e) {
-        FormingTable(Parsing.parsingGroupName);
+        FormingTable(Parsing.ParsingGroupName);
     }
 
     public void FormingTable(string groupNameForming) {
         GroupParsing groupParsing = Parsing.ParsingData1[groupNameForming];
 
-        Debug.Log("Count Data in group: " + groupParsing.dateParses.Count);
+        Debug.Log($"Count Data in group {groupNameForming}: " + groupParsing.dateParses.Count);
         //TableObjectData.FormingTableCell(LoadingDataFireBase.StrudentName[Page].Count, Converter(groupParsing));
 
 
@@ -49,6 +51,7 @@ public class FormingTabelDate : MonoBehaviour
                 break;
             }
         }
+
         if (!SpecializationName_ContainsKey) { return; }
 
         bool YearName_ContainsKey = FireBase.fireBaseData.Faculties[FacultyNameID].Specializations[specializationName].Years.ContainsKey(yearName);
@@ -73,7 +76,6 @@ public class FormingTabelDate : MonoBehaviour
         }
         else { Debug.LogError("Fail Loading Group"); }
 
-
         for (int idCell = 0; idCell < tableTextCell.TableDateCell.Count && idCell < groupParsing.dateParses.Count; idCell++) // ��������� ����
         {
             TextMeshProUGUI CellDate = tableTextCell.TableDateCell[idCell];
@@ -93,34 +95,47 @@ public class FormingTabelDate : MonoBehaviour
         {
             tableObjectData.UpdateLessonCell(lessonCells);
         }
-        for (int idDate = 0; idDate < tableTextCell.TableLessonCell.Count && idDate < groupParsing.dateParses.Count; idDate++) {
-            for (int idColumn = 0; idColumn < groupParsing.dateParses[idDate].Lessons.Count; idColumn++)
+        missingStudent = new();
+        for (int idDate = 0, idNColumn = 0; idDate < tableTextCell.TableLessonCell.Count && idDate < groupParsing.dateParses.Count; idDate++) {
+            for (int idColumn = 0; idColumn < groupParsing.dateParses[idDate].Lessons.Count; idColumn++,idNColumn++)
             {
                 tableTextCell.TableLessonCell[idDate][idColumn].text = groupParsing.dateParses[idDate].Lessons[idColumn];
 
+                // for (int idStudent = 0; idStudent<tableTextCell.TableNCell[idNColumn].Count; idStudent++)
+                // {
+                //     CellTextN();
+                // }
+                
+                group.Dates.TryGetValue(groupParsing.dateParses[idDate].dateTime, out Dates date);
+                if (date != null)
+                {
+                    List<StudentMissing> studentMissings = date.lessons[idColumn].StudentsMissing;
+
+                    foreach (StudentMissing studentMissing in studentMissings)
+                    {
+                        Debug.Log(idNColumn + " " + studentMissing.ID + " " + studentMissing.Type);
+                        missingStudent.Add(new(idNColumn,studentMissing.ID), true);
+                        CellTextN(tableTextCell.TableNCell[idNColumn][studentMissing.ID],
+                            studentMissing.Type ? TypeCellN.valid : TypeCellN.disrespectful);
+                    }
+                }
                 /*else
                 {
                     TypeCellN typeCellN = SerchStudentCell(group, groupParsing, idDate, idColumn, idCell);
                     CellTextN(tableTextCell.TableCell[idDate][idColumn][idCell], typeCellN);
                 }//����� N*/
             }
+            
         }
+        
         StartCoroutine(timerReloadingTable());
 
     }
-    private TypeCellN SerchStudentCell(Group group, GroupParsing groupParsing, int idDate, int idColumn, int idCell) {
-        string date = groupParsing.dateParses[idDate].dateTime;
-        group.Dates.TryGetValue(date, out Dates dates);
-        string lesson = groupParsing.dateParses[idDate].Lessons[idColumn];
-        StudentMissing student = dates?.lessons[idColumn].StudentsMissing.FirstOrDefault(student => student.ID == idCell);
-        if (student == default(StudentMissing))
-            return TypeCellN.no;
-        else if (student.Type == true)
-            return TypeCellN.valid;
-        else if (student.Type == false)
-            return TypeCellN.disrespectful;
-        else
-            return TypeCellN.no;
+
+    public void TimeMissing(Vector2Int idPersonCell,bool isCreate)
+    {
+        CellTextN(tableTextCell.TableNCell[idPersonCell.x][idPersonCell.y],
+            isCreate ? TypeCellN.yes : TypeCellN.no);
     }
     private List<int> Converter(GroupParsing groupParsing) {
 
@@ -140,13 +155,14 @@ public class FormingTabelDate : MonoBehaviour
         disrespectful,
         valid,
         no,
+        yes,
     }
 
     private void CellTextN(TextMeshProUGUI text, TypeCellN typeCell) {
         switch(typeCell)
         {
             case TypeCellN.valid:
-                text.color = Color.yellow;
+                text.color = Color.green;
                 text.text = "N";
                 break;
             case TypeCellN.disrespectful:
@@ -154,8 +170,10 @@ public class FormingTabelDate : MonoBehaviour
                 text.text = "N";
                 break;
             case TypeCellN.no:
-                text.color = Color.white;
                 text.text = "";
+                break;
+            case TypeCellN.yes:
+                text.text = "N";
                 break;
 
 
@@ -168,9 +186,16 @@ public class FormingTabelDate : MonoBehaviour
 
     public IEnumerator timerReloadingTable() {
         yield return new WaitForSeconds(0f);
-        yield return new WaitForSeconds(0f);
         tableObjectData.gameObject.SetActive(false);
-        yield return new WaitForSeconds(0f);
+        yield return new WaitForSeconds(0.1f);
+        tableObjectData.gameObject.SetActive(true);
+        yield return new WaitForSeconds(0.1f);
+        tableObjectData.gameObject.SetActive(false);
+        yield return new WaitForSeconds(0.1f);
+        tableObjectData.gameObject.SetActive(true);
+        yield return new WaitForSeconds(0.1f);
+        tableObjectData.gameObject.SetActive(false);
+        yield return new WaitForSeconds(0.1f);
         tableObjectData.gameObject.SetActive(true);
     }
 

@@ -105,12 +105,9 @@ public class TableObjectData : MonoBehaviour
         CRCChildObject(StudentParent.transform, StudentPrefab, personCount);
         Transform NParent = this.NParent.transform;
 
-        foreach (Transform lessonTime in NParent.transform) // добавляем N
+        for (int i = 0; i< NParent.transform.childCount;i++)
         {
-            foreach (Transform Nlesson in lessonTime.transform)
-            {
-                CRCChildObject(Nlesson, NPrefab, personCount);
-            }
+            CRCChildObject(NParent.transform.GetChild(i), NPrefab, i, personCount);
         }
 
         updateTableData.Invoke(this, EventArgs.Empty);
@@ -118,6 +115,7 @@ public class TableObjectData : MonoBehaviour
     public void UpdateLessonCell(List<int> DatesLesson) {
         int studentCount = tableTextCell.TablePersonCell.Count;
         int countLesson = 0;
+        ClearDate(DatesLesson.Count);
         for (int idDate = 0;idDate < DatesLesson.Count; countLesson += DatesLesson[idDate], idDate++)
         {
             Transform parentLessons = tableTextCell.TableDateCell[idDate].transform;
@@ -130,6 +128,17 @@ public class TableObjectData : MonoBehaviour
         }
 
         updateTableData.Invoke(this, EventArgs.Empty);
+    }
+
+    private void ClearDate(int countLesson)
+    {
+        for (int idCell = countLesson; idCell < tableTextCell.TableDateCell.Count; idCell++) // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
+        {
+            TextMeshProUGUI dateCell = tableTextCell.TableDateCell[idCell];
+            dateCell.text = "";
+            DestoroyChildObject(dateCell.gameObject);
+            
+        }
     }
 
     private void CRCChildObject(Transform parent, GameObject prefab, int count = 1) {
@@ -164,7 +173,7 @@ public class TableObjectData : MonoBehaviour
         {
             if (parent.transform.childCount <= indexStart)
             {
-                Debug.LogError("Колличество parentPerson.childCount не совпадает");
+                Debug.LogError("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ parentPerson.childCount пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ");
                 return;
             }
             GameObject chiled = parent.transform.GetChild(i).gameObject;
@@ -180,7 +189,7 @@ public class TableObjectData : MonoBehaviour
         {
             if (parent.transform.childCount <= indexStart)
             {
-                Debug.LogError("Колличество parentPerson.childCount не совпадает");
+                Debug.LogError("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ parentPerson.childCount пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ");
                 return;
             }
             GameObject TMPObject = parent.transform.GetChild(i).GetChild(0).gameObject;
@@ -195,6 +204,7 @@ public class TableObjectData : MonoBehaviour
         {
             Instantiate(prefab, parent);
         }
+        Debug.Log(parent.childCount);
     }
     private void CreateChildObject(Transform parent, GameObject prefab, int positionColum, int count = 1) {
         for (int i = 0; i < count; i++)
@@ -230,17 +240,17 @@ public class TableObjectData : MonoBehaviour
         
         for(int DateCellID = 0; DateCellID< DateAndLessonCount.Count; DateCellID++)
         {
-            //создание ячеек Даты
+            //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
 
             for (int LessonCellID = 0; LessonCellID < DateAndLessonCount[DateCellID];LessonCellID++)
             {
-                //создание ячейки занятия
+                //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 
                 for (int PersonCellID = 0; PersonCellID < PersonCount; PersonCellID++)
                 {
-                    // Создание ячеек с Person
+                    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ Person
 
-                    // Создание ячеек N для каждого Person
+                    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ N пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ Person
                 }
             }
         }

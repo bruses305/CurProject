@@ -8,32 +8,32 @@ public static class RedactSearchText
 
     private static Dictionary<char, char> LIBRARY_KEY = new()
     {
-        { 'Q','Й'},
-        { 'W','Ц'},
-        { 'E','У'},
-        { 'R','К'},
-        { 'T','Е'},
-        { 'Y','Н'},
-        { 'U','Г'},
-        { 'I','Ш'},
-        { 'O','Щ'},
-        { 'P','З'},
-        { 'A','Ф'},
-        { 'S','Ы'},
-        { 'D','В'},
-        { 'F','А'},
-        { 'G','П'},
-        { 'H','Р'},
-        { 'J','О'},
-        { 'K','Л'},
-        { 'L','Д'},
-        { 'Z','Я'},
-        { 'X','Ч'},
-        { 'C','С'},
-        { 'V','М'},
-        { 'B','И'},
-        { 'N','Т'},
-        { 'M','Ь'},
+        { 'Q','Р™'},
+        { 'W','Р¦'},
+        { 'E','РЈ'},
+        { 'R','Рљ'},
+        { 'T','Р•'},
+        { 'Y','Рќ'},
+        { 'U','Р“'},
+        { 'I','РЁ'},
+        { 'O','Р©'},
+        { 'P','Р—'},
+        { 'A','Р¤'},
+        { 'S','Р«'},
+        { 'D','Р’'},
+        { 'F','Рђ'},
+        { 'G','Рџ'},
+        { 'H','Р '},
+        { 'J','Рћ'},
+        { 'K','Р›'},
+        { 'L','Р”'},
+        { 'Z','РЇ'},
+        { 'X','Р§'},
+        { 'C','РЎ'},
+        { 'V','Рњ'},
+        { 'B','Р'},
+        { 'N','Рў'},
+        { 'M','Р¬'},
     };
 
     public static string UpperText(string groupName) {
@@ -47,7 +47,7 @@ public static class RedactSearchText
         return groupName;
     }
 
-    public static string[] ConverterGroupNameData(string groupName) { //0-год 1-специальность 2-группа
+    public static string[] ConverterGroupNameData(string groupName) { //0-РіРѕРґ 1-СЃРїРµС†РёР°Р»СЊРЅРѕСЃС‚СЊ 2-РіСЂСѓРїРїР°
         try
         {
             if (groupName == null) return new string[3] { null, null, null };

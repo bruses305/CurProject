@@ -1,14 +1,22 @@
+using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class LoadingScreen : MonoBehaviour
 {
-    [SerializeField]private GameObject LoadingScreenObject;
+    public static LoadingScreen Instance;
+    [SerializeField]private GameObject loadingScreenObject;
+
+    private void Start()
+    {
+        Instance = this;
+    }
 
     public void Activate() {
-        LoadingScreenObject.SetActive(true);
+        Instance.loadingScreenObject.SetActive(true);
     }
 
     public void DiesActivate() {
-        LoadingScreenObject.SetActive(false);
+        Instance.loadingScreenObject.SetActive(false);
     }
 }

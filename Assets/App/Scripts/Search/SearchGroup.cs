@@ -1,5 +1,5 @@
+using System;
 using UnityEngine;
-using System.Threading.Tasks;
 using TMPro;
 
 public class SearchGroup : MonoBehaviour
@@ -9,8 +9,14 @@ public class SearchGroup : MonoBehaviour
 
     public async void Search() {
         string groupName = searchPanel.text;
+        LoadingScreenActivate();
+        Debug.Log("Search: " + groupName + ";" + SelectedDates.DateStart + ";" + SelectedDates.DateEnd);
+        await parsingObject.LoadingDefouldData(RedactSearchText.UpperText(groupName), true, SelectedDates.DateStart, SelectedDates.DateEnd);
 
-         await Task.Run(() => parsingObject.LoadingDefouldData(RedactSearchText.UpperText(groupName), true));
+    }
 
+    private static void LoadingScreenActivate()
+    {
+        LoadingScreen.Instance.Activate();
     }
 }

@@ -2,16 +2,27 @@ using UnityEngine;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 using System;
+using System.Collections;
+using System.Diagnostics;
+using System.IO;
+using UnityEngine.Windows;
+using Debug = UnityEngine.Debug;
+using File = System.IO.File;
 
 public class Word : MonoBehaviour
 {
+    public bool isopenToEnd = false;
+    [Range(min:0,max:1)]public float progressBar;
     public int countStudent = 0;
 
     private string[] NameCells = {
-        "№ п/п","         \r\n                       Дата\r\n\r\n\r","        ФИО\r\n", "форма\r\nобучения\r\n(бюджет/платно)\r\n", "1",  "2",  "3",  "4",  "5",  "6",  "7",  "8",  "9",  "10","11",  "12",  "13",  "14",  "15",  "16",  "17",  "18",  "19",  "20","21",  "22",  "23",  "24",  "25",  "26",  "27",  "28",  "29",  "30","ИТОГО","из них"
+        "в„– Рї/Рї","         \r\n                       Р”Р°С‚Р°\r\n\r\n\r","        Р¤РРћ\r\n", "С„РѕСЂРјР°\r\nРѕР±СѓС‡РµРЅРёСЏ\r\n(Р±СЋРґР¶РµС‚/РїР»Р°С‚РЅРѕ)\r\n", "1",  "2",  "3",  "4",  "5",  "6",  "7",  "8",  "9",  "10","11",  "12",  "13",  "14",  "15",  "16",  "17",  "18",  "19",  "20","21",  "22",  "23",  "24",  "25",  "26",  "27",  "28",  "29",  "30","РРўРћР“Рћ","РёР· РЅРёС…"
     };
     private const int countCellRowTable1 = 36;
-    public void unlock() {
+    public void unlock()
+    {
+        progressBar = 0;
+        StartCoroutine(outTick());
         using (WordprocessingDocument wordDoc = WordprocessingDocument.Open("Ved.docx", true))
         {
             try
@@ -22,7 +33,7 @@ public class Word : MonoBehaviour
 
                 Table table = new Table();
 
-                // Границы таблицы
+                // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
                 table.AppendChild(new TableProperties(
                     new TableBorders(
                         new TopBorder { Val = BorderValues.Single, Size = 4 },
@@ -33,10 +44,14 @@ public class Word : MonoBehaviour
                         new InsideVerticalBorder { Val = BorderValues.Single, Size = 4 }
                     )
                 ));
+                progressBar = .2f;
+                StartCoroutine(outTick());
                 Title1PreData(table);
-
+                progressBar = .4f;
+                StartCoroutine(outTick());
                 Table1PreData(table);
-
+                progressBar = .7f;
+                StartCoroutine(outTick());
                 for(int idStudent = 1; idStudent <= countStudent; idStudent++)
                 {
                     TableRow row = new();
@@ -46,8 +61,10 @@ public class Word : MonoBehaviour
                     }
                     table.Append(row);
                 }
+                progressBar = 0.9f;
+                StartCoroutine(outTick());
                 /*
-                // Ячейка (0,1)
+                // пїЅпїЅпїЅпїЅпїЅпїЅ (0,1)
                 row1.Append(new TableCell(new Paragraph(new Run(
                     new RunProperties(new Border { Val = BorderValues.BasicThinLines }),
                     new Text("A211111111")
@@ -57,12 +74,16 @@ public class Word : MonoBehaviour
 
                 body.Append(table);
                 wordDoc.MainDocumentPart.Document.Save();
+                progressBar = 1;
+                StartCoroutine(outTick());
             }
             catch (Exception e)
             {
-                Debug.LogError($"Ошибка при создании таблицы: {e.Message}\n{e.StackTrace}");
+                Debug.LogError($"пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ: {e.Message}\n{e.StackTrace}");
             }
         }
+
+        if(isopenToEnd) Process.Start("Ved.docx");
     }
 
     private void ClearDocument(WordprocessingDocument wordDoc) {
@@ -72,19 +93,19 @@ public class Word : MonoBehaviour
 
             if (mainPart == null)
             {
-                // Если файла ещё нет, создаём новую структуру
+                // пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
                 mainPart = wordDoc.AddMainDocumentPart();
                 mainPart.Document = new Document(new Body());
             }
 
-            // Просто создаём новый "Body", тем самым удаляя всё старое содержимое
+            // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ "Body", пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             mainPart.Document.Body = new Body();
 
             mainPart.Document.Save();
         }
         catch (Exception e)
         {
-            Debug.LogError($"Ошибка при очистке: {e.Message}\n{e.StackTrace}");
+            Debug.LogError($"пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ: {e.Message}\n{e.StackTrace}");
         }
     }
 
@@ -96,10 +117,10 @@ public class Word : MonoBehaviour
 
     }
     private void Table1PreData(Table table) {
-        // -------- Первая строка --------
+        // -------- пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ --------
         TableRow row1 = new TableRow();
 
-        // Ячейка (0,0) — с диагональю
+        // пїЅпїЅпїЅпїЅпїЅпїЅ (0,0) пїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         for (int id = 0; id < 36; id++)
         {
             if (id == 1)
@@ -111,7 +132,7 @@ public class Word : MonoBehaviour
                     )
                 ));
 
-                // Содержимое: два параграфа, имитирующие текст "по диагонали"
+                // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ "пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"
                 diagCell.Append(
                     new Paragraph(
                         new Run(new Text(NameCells[id])) { RunProperties = new RunProperties() }
@@ -144,7 +165,7 @@ public class Word : MonoBehaviour
             else if (id == 35)
             {
                 TableCell cell5 = new TableCell(
-    new Paragraph(new Run(new Text("Верх вложенной ячейки")))
+    new Paragraph(new Run(new Text("пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ")))
 );
                 cell5.Append(new TableCellProperties(
                     new GridSpan { Val = 2 }
@@ -159,27 +180,27 @@ public class Word : MonoBehaviour
         }
         table.Append(row1);
 
-        // ------------- Вторая строка: две повернутые ячейки -------------
+        // ------------- пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ: пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ -------------
         TableRow row2 = new TableRow();
 
-        // Пустые ячейки (1–4), чтобы выровнять
+        // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ (1пїЅ4), пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         for (int i = 0; i < 34; i++)
         {
             row2.Append(new TableCell(new Paragraph()));
         }
 
-        // Ячейка 5 с повёрнутым текстом
+        // пїЅпїЅпїЅпїЅпїЅпїЅ 5 пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         TableCell rotatedCell1 = new TableCell(
-            new Paragraph(new Run(new Text("Вертикал 1")))
+            new Paragraph(new Run(new Text("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ 1")))
         );
         rotatedCell1.Append(new TableCellProperties(
-            new TextDirection { Val = TextDirectionValues.BottomToTopLeftToRight } // Поворот на 90°
+            new TextDirection { Val = TextDirectionValues.BottomToTopLeftToRight } // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ 90пїЅ
         ));
         row2.Append(rotatedCell1);
 
-        // Ячейка 6 с повёрнутым текстом
+        // пїЅпїЅпїЅпїЅпїЅпїЅ 6 пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         TableCell rotatedCell2 = new TableCell(
-            new Paragraph(new Run(new Text("Вертикал 2")))
+            new Paragraph(new Run(new Text("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ 2")))
         );
         rotatedCell2.Append(new TableCellProperties(
             new TextDirection { Val = TextDirectionValues.BottomToTopLeftToRight }
@@ -187,5 +208,10 @@ public class Word : MonoBehaviour
         row2.Append(rotatedCell2);
 
         table.Append(row2);
+    }
+
+    IEnumerator outTick()
+    {
+        yield return new WaitForSeconds(0.001f);
     }
 }
