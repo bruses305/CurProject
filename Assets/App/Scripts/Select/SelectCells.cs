@@ -9,9 +9,8 @@ using UnityEngine.UI;
 public class SelectCells : MonoBehaviour
 {
     public bool isRedact = false;
-    [SerializeField] private FormingTabelDate formingTabelDate;
-    private Dictionary<Vector2Int,bool> SelectedCells => formingTabelDate.missingStudent;
-    private Dictionary<Vector2Int, bool> _localSelectedCells = new();
+    private Dictionary<Vector2Int,bool> SelectedCells => FormingTabelDate.MissingStudent;
+    public static Dictionary<Vector2Int, bool> LocalSelectedCells = new();
     
     private Color colorSelect = new(45f / 255f, 60f / 255f, 63f / 255f);
     private Color colorBaseSelect = new(72f / 255f, 90f / 255f, 94f / 255f);
@@ -45,10 +44,13 @@ public class SelectCells : MonoBehaviour
         }
         else
         {
-            Debug.Log("default(Vector2Int)" + default(Vector2Int));
-            bool isActive = !SelectedCells.ContainsKey(position);
-            if (!_localSelectedCells.Remove(position)) _localSelectedCells[position] = isActive;
-            formingTabelDate.TimeMissing(position, isActive);
+            bool isActive = !SelectedCells.ContainsKey(position); //есть ли в базовом массиве эта переменная если есть то изменяет активность на false если нету то на true
+            bool isLocalSelected = !LocalSelectedCells.Remove(position);
+            if (isLocalSelected) {LocalSelectedCells[position] = isActive; //если в массиве есть элемент со значением true то он удаляется и не заходит в хуйню
+            }
+            //если в массиве нет элемента тоесть не выделена N то заходит в хуйню и смотрит isActive
+            FormingTabelDate.Instance.TimeMissing(position, isActive?isLocalSelected:!isLocalSelected);
+            RedactSelectedCells.SetActiveButton(LocalSelectedCells.Count > 0);
         }
     }
 

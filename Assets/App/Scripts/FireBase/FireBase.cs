@@ -8,6 +8,8 @@ using System;
 
 public class FireBase
 {
+    //private static FireBase _instance = null;
+
     public static FireBaseData fireBaseData = new();
     public static event EventHandler ParsingFireBaseEnd;
 
@@ -20,6 +22,10 @@ public class FireBase
     private DateTime DefouldEndParsing => DateTime.Today - new TimeSpan(1, 0, 0, 0); 
 
     private string facultyName;
+    public FireBase()
+    {
+        //_instance = this;
+    }
 
     public async void Initialized() {
 
@@ -160,7 +166,7 @@ public class FireBase
 
                             lesson.StudentsMissing = studentsMissing;
                         }
-                        else Debug.LogError("Data not found: LoadingForName, studentsMissingReference");
+                        else Debug.LogWarning("Data not found: LoadingForName, studentsMissingReference");
 
                         lessons.Add(lesson);
                         dateParse.Lessons.Add(lesson.Name);
@@ -314,7 +320,7 @@ public class FireBase
             return null;
         }
     }
-    private async Task<List<DatabaseReference>> ReadReferenceEnum(DatabaseReference reference_Data) {
+    private static async Task<List<DatabaseReference>> ReadReferenceEnum(DatabaseReference reference_Data) {
         try
         {
             List<DataSnapshot> totalChildren = new();
@@ -354,7 +360,7 @@ public class FireBase
             return new();
         }
     }
-    public async Task<int> ChildCount(DatabaseReference reference_Data) {
+    private async Task<int> ChildCount(DatabaseReference reference_Data) {
         try
         {
             int totalChildren = 0;
@@ -394,7 +400,7 @@ public class FireBase
             return null;
         }
     }
-    private async Task<List<DatabaseReference>> GetChildAsync(DatabaseReference reference, string key = null) {
+    private static async Task<List<DatabaseReference>> GetChildAsync(DatabaseReference reference, string key = null) {
         try
         {
             if(key!= null)
@@ -555,6 +561,25 @@ public class FireBase
     }
     #endregion
 
+    public static async Task UpdateMissingStudents(string groupName,string dateLesson,int lessonID,int studentID, bool isCreate)
+    {
+        /*DatabaseReference groupReference = await _instance.SearchGroupReference(groupName);
+        DatabaseReference studentMissingReference = groupReference.Child(Dates.Key).Child(dateLesson)
+            .Child(LessonFireBase.Key).Child(LessonFireBase.Key + lessonID)
+            .Child(StudentMissing.Key).Child(StudentMissing.Key + studentID);
+
+        if (isCreate)
+        {
+            await _instance.UpdateData(studentMissingReference, StudentMissing.Key_TYPE, true);
+            await _instance.UpdateData(studentMissingReference, StudentMissing.Key_ID, studentID);
+        }
+        else
+        {
+            await DeleteStudentMissing(studentMissingReference);
+        }
+        
+        Debug.Log("UpdateMissingStudents" + groupName + dateLesson + lessonID + studentID + isCreate);*/
+    }
     public async Task<bool> isCreatingDate(string date, DatabaseReference groupReference)
     {
         DatabaseReference dateReference = groupReference.Child(Dates.Key).Child(date);
@@ -597,6 +622,24 @@ public class FireBase
                 }
                 else
                     await item.RemoveValueAsync();
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError(ex.Message);
+        }
+    }
+    private static async Task DeleteStudentMissing(DatabaseReference studentMissingReference) {
+        try
+        {
+            List<DatabaseReference> childReferenceGroup = await GetChildAsync(studentMissingReference);
+            foreach (var item in childReferenceGroup)
+            {
+                if(item.Key is StudentMissing.Key_TYPE or StudentMissing.Key_ID)
+                {
+                    await item.RemoveValueAsync();
+                }
             }
 
         }

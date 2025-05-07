@@ -15,7 +15,7 @@ using Unity.VisualScripting.Antlr3.Runtime;
 public class Parsing : MonoBehaviour
 {
     public static Parsing Instance;
-    public FireBase fireBase = new();
+    private FireBase _fireBase = new();
     public static event EventHandler PageEvent;
     public static Dictionary<string, GroupParsing> ParsingData1 = new();
     private GroupParsing ParsingDataDefould { get; set; }
@@ -36,7 +36,6 @@ public class Parsing : MonoBehaviour
             ParsingGroupName = PlayerPrefs.GetString(GroupNamePlayerPrefs);
         else
             PlayerPrefs.SetString(GroupNamePlayerPrefs, ParsingGroupName);
-        fireBase.Initialized();
 
     }
     private async void Start() {
@@ -49,14 +48,14 @@ public class Parsing : MonoBehaviour
         AllParsing();
     }
     public async void ButtonEventLoadingAllData() {
-        await Task.Run(fireBase.LoadingAllData);
+        await Task.Run(_fireBase.LoadingAllData);
     }
     public async Task LoadingDefouldData(string parsGroupName, bool isUpdate = false,DateTime? dateStart = null, DateTime? dateEnd = null) {
         int countParsingFail = 0;
         do
         {
             Debug.Log("StartDefouldParsing");
-            bool FB = await TimeTrigger(fireBase.LoadingData(parsGroupName,dateStart, dateEnd), 10); 
+            bool FB = await TimeTrigger(_fireBase.LoadingData(parsGroupName,dateStart, dateEnd), 10); 
             
             if (FB)
             {
@@ -106,7 +105,7 @@ public class Parsing : MonoBehaviour
             }
         }
         Debug.Log("GroupName" + GroupName.Count);
-        bool isUpdate = await fireBase.isUpdate();
+        bool isUpdate = await _fireBase.isUpdate();
         foreach (string groupName in GroupName)
         {
             GroupParsing groupParsing = await ParsingMetod(groupName, isUpdate);
@@ -182,7 +181,7 @@ public class Parsing : MonoBehaviour
     private async Task<List<DateParse>> WorkingTabelsType2(HtmlNode table, string groupName, bool updateData, DateTime? endDateTime) {
         List<DateParse> dateParses = new();
         ListAndInt<DateParse> dateParsesNotLoading = new(){DatList = new List<DateParse>(), IntList = new List<int>()};
-        DatabaseReference groupReference = !updateData? null:await fireBase.SearchGroupReference(groupName);
+        DatabaseReference groupReference = !updateData? null:await _fireBase.SearchGroupReference(groupName);
 
         if (table != null)
         {
@@ -196,7 +195,7 @@ public class Parsing : MonoBehaviour
                 {
                     DateTime timeLesson = ConvertStringToDateTime(DateNodesName[i]);
                     string dateString = timeLesson.Day + "-" + timeLesson.Month + "-" + timeLesson.Year;
-                    if (timeLesson < DateTime.Today && await fireBase.isCreatingDate(dateString, groupReference))
+                    if (timeLesson < DateTime.Today && await _fireBase.isCreatingDate(dateString, groupReference))
                         dateParsesNotLoading.Add(new DateParse { dateTime = dateString }, i);
                     if (timeLesson >= DateTime.Today && timeLesson <= endDateTime)
                     {
@@ -228,7 +227,7 @@ public class Parsing : MonoBehaviour
                                 ConvertToCollectionString(LessonTypeNodes).ForEach(obj => LessonsType.Add(LessonFireBase.isTypeLesson(obj)));
 
                                 if (LessonsType.Count == LessonsName.Count) {
-                                    await fireBase.CreateLesson(LessonsName, LessonsType, dateParsesTime[idDate].dateTime, groupReference);
+                                    await _fireBase.CreateLesson(LessonsName, LessonsType, dateParsesTime[idDate].dateTime, groupReference);
                                 }
                             }
                             LessonsName.ForEach(obj => dateParsesTime[idDate].Lessons.Add(obj));

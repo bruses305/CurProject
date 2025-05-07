@@ -11,10 +11,16 @@ using System.Collections;
 
 public class FormingTabelDate : MonoBehaviour
 {
+    public static FormingTabelDate Instance;
     [SerializeField] TableObjectData tableObjectData;
     private TableTextCell tableTextCell => tableObjectData.tableTextCell;
+    private static GroupParsing _lastGroupParsing;
+    private static Group _lastGroup;
 
-    public Dictionary<Vector2Int, bool> missingStudent;
+    public static Dictionary<Vector2Int, bool> MissingStudent;
+    private void Awake() {
+        Instance = this;
+    }
     private void Start() {
         Parsing.PageEvent += EventFormingTable;
     }
@@ -25,7 +31,8 @@ public class FormingTabelDate : MonoBehaviour
 
     public void FormingTable(string groupNameForming) {
         GroupParsing groupParsing = Parsing.ParsingData1[groupNameForming];
-
+        _lastGroupParsing = groupParsing;
+        
         Debug.Log($"Count Data in group {groupNameForming}: " + groupParsing.dateParses.Count);
         //TableObjectData.FormingTableCell(LoadingDataFireBase.StrudentName[Page].Count, Converter(groupParsing));
 
@@ -61,6 +68,7 @@ public class FormingTabelDate : MonoBehaviour
         if (!groupName_ContainsKey) { return; }
 
         Group group = FireBase.fireBaseData.Faculties[FacultyNameID].Specializations[specializationName].Years[yearName].Groups[groupName];
+        _lastGroup = group;
         if (groupName_ContainsKey)
         {
             if (tableTextCell.TablePersonCell.Count != group.Students.Count)
@@ -95,7 +103,7 @@ public class FormingTabelDate : MonoBehaviour
         {
             tableObjectData.UpdateLessonCell(lessonCells);
         }
-        missingStudent = new();
+        MissingStudent = new();
         for (int idDate = 0, idNColumn = 0; idDate < tableTextCell.TableLessonCell.Count && idDate < groupParsing.dateParses.Count; idDate++) {
             for (int idColumn = 0; idColumn < groupParsing.dateParses[idDate].Lessons.Count; idColumn++,idNColumn++)
             {
@@ -114,7 +122,7 @@ public class FormingTabelDate : MonoBehaviour
                     foreach (StudentMissing studentMissing in studentMissings)
                     {
                         Debug.Log(idNColumn + " " + studentMissing.ID + " " + studentMissing.Type);
-                        missingStudent.Add(new(idNColumn,studentMissing.ID), true);
+                        MissingStudent.Add(new(idNColumn,studentMissing.ID), true);
                         CellTextN(tableTextCell.TableNCell[idNColumn][studentMissing.ID],
                             studentMissing.Type ? TypeCellN.valid : TypeCellN.disrespectful);
                     }
@@ -130,6 +138,51 @@ public class FormingTabelDate : MonoBehaviour
         
         StartCoroutine(timerReloadingTable());
 
+    }
+
+    public static void CanselMissingStudent()
+    {
+        foreach (var localSelectedCell in SelectCells.LocalSelectedCells)
+        {
+            Instance.TimeMissing(localSelectedCell.Key, !localSelectedCell.Value);
+        }
+
+        SelectCells.LocalSelectedCells = new();
+    }
+    public static async Task MergingMissingStudent()
+    {
+        foreach (var localSelectedCell in SelectCells.LocalSelectedCells)
+        {
+            if(!localSelectedCell.Value) MissingStudent.Remove(localSelectedCell.Key);
+            else MissingStudent.Add(localSelectedCell.Key, localSelectedCell.Value);
+            
+            FindDateAndLessonAndStudent(localSelectedCell.Key,out string date, out int lessonID, out int studentID);
+            await FireBase.UpdateMissingStudents(_lastGroupParsing.Name,date,lessonID,studentID, localSelectedCell.Value);
+            
+            SelectCells.LocalSelectedCells = new();
+        }
+        
+    }
+
+    private static void FindDateAndLessonAndStudent(Vector2Int position,out string date, out int lessonID, out int studentID)
+    {
+        date = DateTime.Today.ToString("dd-MM-yyyy");
+        lessonID = -1;
+        List<DateParse> dateParses = _lastGroupParsing.dateParses;
+        for (int idDate = 0,idLessonColum = 0; idDate < dateParses.Count; idDate++)
+        {
+            List<string> lessons = dateParses[idDate].Lessons;
+            for (int idLesson = 0; idLesson < lessons.Count; idLesson++,idLessonColum++)
+            {
+                if (idLessonColum == position.x)
+                {
+                    date = dateParses[idDate].dateTime;
+                    lessonID = idLesson;
+                }
+            }
+        }
+
+        studentID = _lastGroup.Students[position.y].ID;
     }
 
     public void TimeMissing(Vector2Int idPersonCell,bool isCreate)
@@ -158,7 +211,7 @@ public class FormingTabelDate : MonoBehaviour
         yes,
     }
 
-    private void CellTextN(TextMeshProUGUI text, TypeCellN typeCell) {
+    private static void CellTextN(TextMeshProUGUI text, TypeCellN typeCell) {
         switch(typeCell)
         {
             case TypeCellN.valid:
