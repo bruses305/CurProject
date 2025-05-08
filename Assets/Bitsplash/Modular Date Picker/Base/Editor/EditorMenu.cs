@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -7,7 +8,9 @@ public class EditorMenu
 {
     private static void InstanciateCanvas(string path)
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         Canvas[] canvases = GameObject.FindObjectsOfType<Canvas>();
+#pragma warning restore CS0618 // Type or member is obsolete
         if (canvases == null || canvases.Length == 0)
         {
             EditorUtility.DisplayDialog("No canvas in scene", "Please add a canvas to the scene and try again", "Ok");

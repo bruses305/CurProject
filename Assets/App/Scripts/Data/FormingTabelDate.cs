@@ -36,7 +36,6 @@ public class FormingTabelDate : MonoBehaviour
         GroupParsing groupParsing = Parsing.ParsingData1[groupNameForming];
         LastGroupParsing = groupParsing;
         
-        Debug.Log($"Count Data in group {groupNameForming}: " + groupParsing.dateParses.Count);
         //TableObjectData.FormingTableCell(LoadingDataFireBase.StrudentName[Page].Count, Converter(groupParsing));
 
 
@@ -77,7 +76,6 @@ public class FormingTabelDate : MonoBehaviour
             if (tableTextCell.TablePersonCell.Count != group.Students.Count)
             {
                 tableObjectData.UpdatePersonCell(group.Students.Count);
-                Debug.Log("Fail Loading Student Name Data Or Error Table Cell");
             }
             for (int idPersonCell = 0; idPersonCell < tableTextCell.TablePersonCell.Count; idPersonCell++)
             {
@@ -144,10 +142,12 @@ public class FormingTabelDate : MonoBehaviour
             if (FireBase.fireBaseData.NameGroupAdministration.Contains(groupParsing.Name)){
                 redactorToolSwitcher.SetActive(true);
                 AddCertificate.SetActiveOpenRedactorButton(true);
+                AddStudent.SetActiveOpenRedactorButton(true);
             }
             else{
                 redactorToolSwitcher.SetActive(false);
                 AddCertificate.SetActiveOpenRedactorButton(false);
+                AddStudent.SetActiveOpenRedactorButton(false);
                 redactorToolSwitcher.GetComponent<Toggle>().isOn = false;
             }
         }
@@ -155,6 +155,7 @@ public class FormingTabelDate : MonoBehaviour
         {
             redactorToolSwitcher.SetActive(false);
             AddCertificate.SetActiveOpenRedactorButton(false);
+            AddStudent.SetActiveOpenRedactorButton(false);
             redactorToolSwitcher.GetComponent<Toggle>().isOn = false;
         }
 

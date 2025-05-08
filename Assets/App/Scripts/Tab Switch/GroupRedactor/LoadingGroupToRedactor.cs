@@ -1,12 +1,13 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 public class LoadingGroupToRedactor : MonoBehaviour
 {
-    [SerializeField] Button activatorListGrops;
-    [SerializeField] GameObject GroupsRedactorParent;
-    [SerializeField] GameObject prefabGroupRedacror;
+    [SerializeField] private Button activatorListGrops;
+    [SerializeField] private GameObject groupsRedactorParent;
+    [SerializeField] private GameObject prefabGroupRedacror;
 
     private void Awake() {
         Parsing.PageEvent += FireBase_ParsingFireBaseEnd;
@@ -18,7 +19,6 @@ public class LoadingGroupToRedactor : MonoBehaviour
         activatorListGrops.gameObject.SetActive(false);
         if (FireBase.fireBaseData.IsAdministration)
         {
-            Debug.Log("Loading Groups Redactor");
             activatorListGrops.gameObject.SetActive(true);
             CreateGroupsRedactor();
         }
@@ -27,11 +27,9 @@ public class LoadingGroupToRedactor : MonoBehaviour
     private void CreateGroupsRedactor() {
         foreach(var groupName in FireBase.fireBaseData.NameGroupAdministration)
         {
-            GameObject groupObject = Instantiate(prefabGroupRedacror, GroupsRedactorParent.transform);
+            GameObject groupObject = Instantiate(prefabGroupRedacror, groupsRedactorParent.transform);
             groupObject.transform.GetChild(0).GetChild(0).TryGetComponent(out TextMeshProUGUI tmp);
             tmp.text = groupName;
-            groupObject.TryGetComponent(out Button buttonComponent);
-            buttonComponent.onClick.AddListener(() => OpenGroupRedactor.LoadingRedactor(groupName));
         }
     }
 }

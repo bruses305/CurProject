@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
-using UnityEngine.EventSystems;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 public class AddCertificate : MonoBehaviour
@@ -18,20 +16,20 @@ public class AddCertificate : MonoBehaviour
     
     private string GroupName => FormingTabelDate.LastGroupParsing.Name;
     private List<Student> Students => FormingTabelDate.LastGroup.Students;
-    private bool _onStartEditing = false;
+    private bool _onStartEditing;
 
     private void Awake()
     {
         _instance = this;
         
-        studentName.onSubmit.AddListener((value) => StartInputStudentName());
-        studentName.onEndEdit.AddListener((value) => EndInputStudentName());
+        studentName.onSubmit.AddListener((_) => StartInputStudentName());
+        studentName.onEndEdit.AddListener((_) => EndInputStudentName());
         
-        dateStart.onSubmit.AddListener((value) => StartInputDate(dateStart));
-        dateStart.onEndEdit.AddListener((value) =>   EndInputDate(dateStart));
+        dateStart.onSubmit.AddListener((_) => StartInputDate(dateStart));
+        dateStart.onEndEdit.AddListener((_) =>   EndInputDate(dateStart));
         
-        dateEnd.onSelect.AddListener((value) => StartInputDate(dateEnd));
-        dateEnd.onDeselect.AddListener((value) =>   EndInputDate(dateEnd));
+        dateEnd.onSelect.AddListener((_) => StartInputDate(dateEnd));
+        dateEnd.onDeselect.AddListener((_) =>   EndInputDate(dateEnd));
         
         openCertificateRedactor.onClick.AddListener(ActivateCreateCertificate);
         createCertificate.onClick.AddListener(CreateCertificate);
@@ -49,14 +47,14 @@ public class AddCertificate : MonoBehaviour
 
     private async void CreateCertificate()
     {
-        bool isdate1 = DateTime.TryParse(dateStart.text, out DateTime dateStartDate);
-        bool isdate2 = DateTime.TryParse(dateEnd.text, out DateTime dateEndDate);
+        bool isDate = DateTime.TryParse(dateStart.text, out DateTime dateStartDate);
+        isDate = DateTime.TryParse(dateEnd.text, out DateTime dateEndDate) && isDate;
         if (dateStartDate > dateEndDate)
         {
             dateEnd.textComponent.color = Color.red;
             return;
         }
-        if (_onStartEditing && isdate1 && isdate2)
+        if (_onStartEditing && isDate)
         {
             ActivateCreateCertificate();
             
@@ -77,7 +75,7 @@ public class AddCertificate : MonoBehaviour
     }
     private void EndInputDate(TMP_InputField inputField)
     {
-        if (!DateTime.TryParse(inputField.text, out DateTime date))
+        if (!DateTime.TryParse(inputField.text, out _))
         {
             inputField.textComponent.color = Color.red;
         }
@@ -85,7 +83,7 @@ public class AddCertificate : MonoBehaviour
     private void StartInputStudentName()
     {
         studentName.textComponent.color = Color.white;
-        _onStartEditing=true;
+        _onStartEditing = true;
     }
     private void EndInputStudentName()
     {

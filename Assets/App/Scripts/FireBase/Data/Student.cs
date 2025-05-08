@@ -3,6 +3,7 @@ using System.Collections.Generic;
 public class Student
 {
     public const string Key = "Students";
+    public const string KeyChild = "Student";
     public const string Key_NAME = "Name";
     public const string Key_ID = "ID";
     public const string Key_TYPE = "Type";

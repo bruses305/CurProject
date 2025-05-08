@@ -6,6 +6,6 @@ public class ReportsButtonEvent : MonoBehaviour
     
     public void Vedomost1()
     {
-        AttendanceDocFiller.Create(path,ConverterDataToReports.StudentAttendance(),new(),new(),true);
+        AttendanceDocFiller.Create(path,ConverterDataToReports.StudentAttendance(),ConverterDataToReports.StudentJustificationDocument(),ConverterDataToReports.StudentMakeupEntry(),true);
     }
 }

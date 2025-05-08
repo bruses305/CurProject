@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
 using System;
-using Unity.VisualScripting;
 
 public class FireBase
 {
@@ -16,27 +15,27 @@ public class FireBase
 
     private DatabaseReference reference;
     private FirebaseAuth _authPlayer;
-    public static bool isAdminLoading = false;
-
-    private DateTime TimeAdd3Day => DateTime.Now + new TimeSpan(3,0,0,0);
-    private DateTime DefouldStartParsing => DateTime.Today - new TimeSpan(DateTime.Today.Day-1, 0, 0, 0);
-    private DateTime DefouldEndParsing => DateTime.Today; 
+    private static bool isAdminLoading = false;
 
     private string facultyName;
-    public FireBase()
-    {
+    public FireBase(){
         _instance = this;
     }
 
-    public async void Initialized() {
+    public async void Initialized()
+    {
+        try
+        {
+            reference = FirebaseDatabase.DefaultInstance.RootReference;
+            _authPlayer = FirebaseAuth.DefaultInstance;
 
-        reference = FirebaseDatabase.DefaultInstance.RootReference;
-        _authPlayer = FirebaseAuth.DefaultInstance;
-
-        object connectingTest = await ReadValue(reference.Child("Connection").Child("Test"));
-        if (connectingTest is bool != true) Debug.Log("Fail Connection");
-        else Debug.Log("successful connection, Initialization End");
-
+            object connectingTest = await ReadValue(reference.Child("Connection").Child("Test"));
+            Debug.Log(connectingTest is bool != true ? "Fail Connection" : "successful connection, Initialization End");
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning(e.Message);
+        }
     }
     public async Task<bool> LoadingData(string groupName, DateTime? startDateTime = null, DateTime? endDateTime = null) {
         try
@@ -52,16 +51,7 @@ public class FireBase
             return false;
         }
     }
-
-    public async void LoadingAllData() {
-        Debug.Log("Start Loading All Data");
-        fireBaseData.Faculties = new();
-        bool fbAllData = await LoadingForData(null);
-        Debug.Log("FBAllData: " + fbAllData);
-        ParsingFireBaseEnd.Invoke(this, EventArgs.Empty);
-    }
-
-    public async Task<bool> Administration() {
+    private async Task<bool> Administration() {
         DatabaseReference AdministrationReference = reference.Child(FireBaseData.Key_ADMINISTRATION).Child(StartLoadingData.UUID);
         if (AdministrationReference != null) isAdminLoading = true;
         
@@ -196,11 +186,20 @@ public class FireBase
                             {
                                 StudentMissing studentMissing = new StudentMissing()
                                 {
-                                    Type = Convert.ToBoolean(
-                                        await ReadValue(studentMissingReference.Child(StudentMissing.Key_TYPE))),
                                     ID = Convert.ToInt32(
                                         await ReadValue(studentMissingReference.Child(StudentMissing.Key_ID)))
                                 };
+                                studentMissing.Type = Convert.ToBoolean(
+                                    await ReadValue(
+                                        studentMissingReference.Child(StudentMissing
+                                            .Key_TYPE)));
+                                if (!studentMissing.Type)
+                                {
+                                    studentMissing.Type = FindCertificate(
+                                        group.Students[studentMissing.ID].Certificates,
+                                        DateTime.Parse(dateReference.Key));
+                                    if (studentMissing.Type) await UpdateMissingStudents(studentMissingReference, true);
+                                }
 
                                 studentsMissing.Add(studentMissing);
                             }
@@ -232,8 +231,8 @@ public class FireBase
     private async Task<bool> LoadingForData(string baseGroupLoad, DateTime? startDateTime = null, DateTime? endDateTime = null)
     {
 
-        DateTime startDateTimeNn = startDateTime ?? DefouldStartParsing;
-        DateTime endDateTimeNn = endDateTime ?? DefouldEndParsing;
+        DateTime startDateTimeNn = startDateTime ?? Times.FbDefouldStartParsing;
+        DateTime endDateTimeNn = endDateTime ?? Times.FbDefouldEndParsing;
         
         string[] GroupNameDat = RedactSearchText.ConverterGroupNameData(baseGroupLoad).ToArray(); 
         
@@ -478,7 +477,7 @@ public class FireBase
     public async Task<bool> CreateLesson(List<string> names, List<LessonFireBase.TypeLesson> types, string date, DatabaseReference referenceGroup) {
         try
         {
-            if (DateTime.Parse(date) >= TimeAdd3Day) { return true; }
+            if (DateTime.Parse(date) >= Times.TimeAdd3Day) { return true; }
             DatabaseReference reference_Lesson = referenceGroup
                 .Child(Dates.Key).Child(date)
                 .Child(LessonFireBase.Key);
@@ -532,20 +531,17 @@ public class FireBase
             return false;
         }
     }
-    public async Task<bool> CreateStudentMissing(string name, LessonFireBase.TypeLesson type, string date, string idFaculty, int idSpecialization, int idYear, int idGroup, int idLesson) {
+    public static async Task<bool> CreateStudent(string groupName, string studentName, bool typeStudent) {
         try
         {
-
-            DatabaseReference reference_StudentMissing = reference.Child(Faculty.key).Child(idFaculty)
-                .Child(Specialization.key).Child(Specialization.key + idSpecialization)
-                .Child(Year.key).Child(Year.key + idYear)
-                .Child(Group.key).Child(Group.key + idGroup)
-                .Child(LessonFireBase.Key).Child(LessonFireBase.Key + idLesson)
-                .Child(StudentMissing.Key);
-            int childCount = await ChildCount(reference_StudentMissing);
-            DatabaseReference newFaculty = reference_StudentMissing.Child(StudentMissing.Key + childCount);
-            await UpdateData(newFaculty, StudentMissing.Key_ID, name);
-            await UpdateData(newFaculty, StudentMissing.Key_TYPE, false);
+            DatabaseReference groupReference = await _instance.SearchGroupReference(groupName);
+            DatabaseReference studentReference = groupReference.Child(Student.Key);
+            
+            int childCount = await _instance.ChildCount(studentReference);
+            DatabaseReference newStudent = studentReference.Child(Student.KeyChild + childCount);
+            await _instance.UpdateData(newStudent, Student.Key_NAME, studentName);
+            await _instance.UpdateData(newStudent, Student.Key_ID, childCount);
+            await _instance.UpdateData(newStudent, Student.Key_TYPE, typeStudent ? "Б" : "П");
 
             return true;
         }
@@ -555,41 +551,19 @@ public class FireBase
             return false;
         }
     }
-    public async Task<bool> CreateStudent(string name, string idFaculty, int idSpecialization, int idYear, int idGroup) {
-        try
-        {
-            DatabaseReference group = await SearchGroupReference(name);
-            DatabaseReference reference_Student = reference.Child(Faculty.key).Child(idFaculty)
-                .Child(Specialization.key).Child(Specialization.key + idSpecialization)
-                .Child(Year.key).Child(Year.key + idYear)
-                .Child(Group.key).Child(Group.key + idGroup)
-                .Child(Student.Key);
-            int childCount = await ChildCount(reference_Student);
-            DatabaseReference newFaculty = reference_Student.Child(Student.Key + childCount);
-            await UpdateData(newFaculty, Student.Key_NAME, name);
-
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError(ex.Message);
-            return false;
-        }
-    }
-    public async Task UpdateData(DatabaseReference reference, string key, object data) {
-        await reference.Child(key).SetValueAsync(data);
-    }
-    #endregion
-
     public static async Task CreateCertificate(string groupName,int studentID, string dateStart, string dateEnd)
     {
         DatabaseReference groupReference = await _instance.SearchGroupReference(groupName);
         DatabaseReference dateCertificateReference = groupReference.
-                Child(Student.Key).Child("Student" + studentID).
-                Child(Student.Key_CERTIFICATES).Child(dateEnd);
+            Child(Student.Key).Child("Student" + studentID).
+            Child(Student.Key_CERTIFICATES).Child(dateEnd);
         
         await _instance.UpdateData(dateCertificateReference, Student.Key_CERTIFICATESSTART, dateStart);
     }
+    
+
+    #region Update
+
     public static async Task UpdateMissingStudents(string groupName,string dateLesson,int lessonID,int studentID, bool isCreate)
     {
         DatabaseReference groupReference = await _instance.SearchGroupReference(groupName);
@@ -607,12 +581,51 @@ public class FireBase
             await DeleteStudentMissing(studentMissingReference);
         }
         
-        Debug.Log("UpdateMissingStudents" + groupName + dateLesson + lessonID + studentID + isCreate);
     }
-    public static async Task UpdateMissingStudents(DatabaseReference studentMissingReference,bool isLegal)
+    private static async Task UpdateMissingStudents(DatabaseReference studentMissingReference,bool isLegal)
     {
         await _instance.UpdateData(studentMissingReference, StudentMissing.Key_TYPE, isLegal);
-        Debug.Log("UpdateMissingStudents" + studentMissingReference.Key + isLegal);
+    }
+    private async Task UpdateData(DatabaseReference reference, string key, object data) {
+        await reference.Child(key).SetValueAsync(data);
+    }
+
+    #endregion
+    
+    #endregion
+
+
+    private static bool FindCertificate(Dictionary<string,string> certificates, DateTime dateTotal)
+    {
+        foreach (var keyValuePair in certificates)
+        {
+            if (DateTime.Parse(keyValuePair.Key) >= dateTotal)
+            {
+                if (DateTime.Parse(keyValuePair.Value) <= dateTotal)
+                {
+                    return true;
+                };
+            }
+        }
+
+        return false;
+    }
+    public static List<KeyValuePair<string,string>> FindCertificate(Dictionary<string,string> certificates, DateTime monthTotal,bool first)
+    {
+        List<KeyValuePair<string,string>> certificatesList = new();
+        foreach (var keyValuePair in certificates)
+        {
+            if (DateTime.Parse(keyValuePair.Key) >= monthTotal)
+            {
+                if (DateTime.Parse(keyValuePair.Value).Month <= monthTotal.Month)
+                {
+                    certificatesList.Add(keyValuePair);
+                    if (first) return certificatesList;
+                };
+            }
+        }
+
+        return certificatesList;
     }
     public async Task<bool> isCreatingDate(string date, DatabaseReference groupReference)
     {

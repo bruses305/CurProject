@@ -26,8 +26,6 @@ public class Parsing : MonoBehaviour
     private const string POLESSU_FILE2 = ".//div[@class='container']";
     private const string GroupNamePlayerPrefs = "GROUP_NAME";
     public static string ParsingGroupName = "22ИТ-3";
-    private DateTime dateTime_Now = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day);
-    private DateTime defouldEndDateTime = DateTime.Today;
 
 
     private void Awake() {
@@ -47,14 +45,10 @@ public class Parsing : MonoBehaviour
         Debug.Log("All Parsing Web Site");
         AllParsing();
     }
-    public async void ButtonEventLoadingAllData() {
-        await Task.Run(_fireBase.LoadingAllData);
-    }
     public async Task LoadingDefouldData(string parsGroupName, bool isUpdate = false,DateTime? dateStart = null, DateTime? dateEnd = null) {
         int countParsingFail = 0;
         do
         {
-            Debug.Log("StartDefouldParsing");
             bool FB = await TimeTrigger(_fireBase.LoadingData(parsGroupName,dateStart, dateEnd), 10); 
             
             if (FB)
@@ -116,8 +110,7 @@ public class Parsing : MonoBehaviour
     }
 
     private async Task<GroupParsing> ParsingMetod(string GroupName, bool updateData, DateTime? endDateTime = null) {
-        endDateTime ??= defouldEndDateTime;
-        Debug.Log(endDateTime.ToString());
+        endDateTime ??= Times.PDefouldEndParsing;
 
         GroupParsing groupParsing = new();
         groupParsing.Name = GroupName;
@@ -309,7 +302,6 @@ public class Parsing : MonoBehaviour
             Debug.Log("Error Connecting");
         }
         StopCoroutine(corotine);
-        Debug.Log(result);
         return result;
     }
     IEnumerator ResourceTickOver(CancellationTokenSource token, string taskType = "", float waitTime = 10) {

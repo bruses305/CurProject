@@ -23,16 +23,7 @@ public static class AttendanceDocFiller
         isOpenToEnd = isopenToEnd;
         /*
 
-        List<StudentJustificationDocument> Jasts = new()
-        {
-            new()
-            {
-                Name = "Лагун С.C.",
-                typeJust = TypeJust.Заявление,
-                startJust = new DateTime(2025,8,12),
-                endJust = new DateTime(2025,8,18)
-            }
-        };
+        
         List<StudentMakeupEntry> Makeup = new()
         {
             new()
