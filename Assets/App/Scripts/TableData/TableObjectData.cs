@@ -17,7 +17,7 @@ public class TableObjectData : MonoBehaviour
     [SerializeField] private GameObject StudentParent;
     [SerializeField] private GameObject LessonParent;
     [SerializeField] private GameObject NParent;
-    [SerializeField] private GameObject TimeParent;
+    [SerializeField] public GameObject TimeParent;
     [SerializeField] private GameObject GroupParent;
 
     [SerializeField] private SelectCells selectCells;
@@ -204,7 +204,6 @@ public class TableObjectData : MonoBehaviour
         {
             Instantiate(prefab, parent);
         }
-        Debug.Log(parent.childCount);
     }
     private void CreateChildObject(Transform parent, GameObject prefab, int positionColum, int count = 1) {
         for (int i = 0; i < count; i++)

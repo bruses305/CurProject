@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class SelectCells : MonoBehaviour
 {
-    public bool isRedact = false;
+    [SerializeField]private Toggle isRedact;
     private Dictionary<Vector2Int,bool> SelectedCells => FormingTabelDate.MissingStudent;
     public static Dictionary<Vector2Int, bool> LocalSelectedCells = new();
     
@@ -25,7 +25,7 @@ public class SelectCells : MonoBehaviour
         ConvertToImage(((TableObjectData)sender).tableTextCell.TableNCell);
     }
     public void isPinned(PointerEventData data, Vector2Int position) {
-        if (!isRedact)
+        if (!isRedact.isOn)
         {
             if (position == positionPinned)
             {

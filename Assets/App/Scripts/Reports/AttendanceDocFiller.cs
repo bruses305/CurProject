@@ -10,49 +10,18 @@ using Color = DocumentFormat.OpenXml.Wordprocessing.Color;
 using Debug = UnityEngine.Debug;
 using TypeJust = StudentJustificationDocument.TypeJust;
 
-public class AttendanceDocFiller : MonoBehaviour
+public static class AttendanceDocFiller
 {
-    public bool isopenToEnd = false;
+    public static bool isOpenToEnd;
     private const int CM = 567;
     private const float TOPBODY = 0.75f;
     private const float BUTTONBODY = 0.5f;
     private const float LEFTBODY = 1.27f;
     private const float RIGHTBODY = 1.27f;
     private const float LEFTTABLE = -0.76f;
-    public void Create(string path) {
-        List<StudentAttendance> students = new(){ new(){
-            FullName = "Лагун Сергей Сергеевич",
-            StudyForm = "Б",
-            Valid = 30,
-        },
-        new(){
-            FullName = "Лагун Сергей Сергеевич",
-            StudyForm = "Б",
-            Valid = 30,
-        },
-        new(){
-            FullName = "Лагун Сергей Сергеевич",
-            StudyForm = "Б",
-            Valid = 30,
-        },
-        new(){
-            FullName = "Лагун Сергей Сергеевич",
-            StudyForm = "Б",
-            Valid = 30,
-        },
-        new(){
-            FullName = "Лагун Сергей Сергеевич",
-            StudyForm = "Б",
-            Valid = 30,
-        }
-        };
-        students[0].DailyHours[1] = 2;
-        students[1].DailyHours[5] = 8;
-        students[2].DailyHours[3] = 6;
-        students[3].DailyHours[7] = 6;
-        students[0].DailyHours[2] = 6;
-        students[1].DailyHours[22] = 2;
-        students[1].DailyHours[15] = 4;
+    public static void Create(string path,List<StudentAttendance> students,List<StudentJustificationDocument> jasts,List<StudentMakeupEntry> makeup, bool isopenToEnd = false) {
+        isOpenToEnd = isopenToEnd;
+        /*
 
         List<StudentJustificationDocument> Jasts = new()
         {
@@ -72,13 +41,13 @@ public class AttendanceDocFiller : MonoBehaviour
                 Hours = 4,
                 Subject = "СТОЭИ"
             }
-        };
+        };*/
         CreateReport(path,
             students,
-            Jasts,
-            Makeup);
+            jasts,
+            makeup);
     }
-    public void CreateReport(string path, List<StudentAttendance> attendanceList, List<StudentJustificationDocument> justifications, List<StudentMakeupEntry> makeupEntries) {
+    private static void CreateReport(string path, List<StudentAttendance> attendanceList, List<StudentJustificationDocument> justifications, List<StudentMakeupEntry> makeupEntries) {
         //try
         //{
             using (WordprocessingDocument doc = WordprocessingDocument.Create(path, WordprocessingDocumentType.Document))
@@ -113,7 +82,7 @@ public class AttendanceDocFiller : MonoBehaviour
                 CreateTitle3(body);
         }
             
-            if(isopenToEnd) Process.Start(path);
+            if(isOpenToEnd) Process.Start(path);
         //}
         //catch
         //{
@@ -121,7 +90,7 @@ public class AttendanceDocFiller : MonoBehaviour
         //}
     }
 
-    private Table CreateAttendanceTable(List<StudentAttendance> students) {
+    private static Table CreateAttendanceTable(List<StudentAttendance> students) {
         Table table = new Table();
         table.AppendChild(new TableProperties(
              new TableIndentation
@@ -174,7 +143,7 @@ public class AttendanceDocFiller : MonoBehaviour
         return table;
     }
 
-    private Table CreateJustificationTable(List<StudentJustificationDocument> list) {
+    private static Table CreateJustificationTable(List<StudentJustificationDocument> list) {
         Table table = new Table();
         table.AppendChild(new TableProperties(
             new TableIndentation
@@ -250,7 +219,7 @@ public class AttendanceDocFiller : MonoBehaviour
         return table;
     }
 
-    private Table CreateMakeupTable(List<StudentMakeupEntry> list) {
+    private static Table CreateMakeupTable(List<StudentMakeupEntry> list) {
         Table table = new Table();
         table.AppendChild(new TableProperties(
             new TableLayout { Type = TableLayoutValues.Fixed },
@@ -286,14 +255,14 @@ public class AttendanceDocFiller : MonoBehaviour
         return table;
     }
 
-    private void CreateTitle1(Body body) {
+    private static void CreateTitle1(Body body) {
         body.Append(CreateParagraph("ВЕДОМОСТЬ", justificationValues: JustificationValues.Center));
         body.Append(CreateParagraph("учета учебных часов, пропущенных студентами", justificationValues: JustificationValues.Center));
         body.Append(CreateParagraph("за _________________ месяц  202__ г.", justificationValues: JustificationValues.Center));
         body.Append(CreateCustomParagraph("Курс   _____   ГРУППА   ", ".                             ."));
         body.Append(CreateParagraph(" ", size: 6));
     }
-    private void CreateTitle2(Body body) {
+    private static void CreateTitle2(Body body) {
         body.Append(CreateParagraph(" ", size: 6));
         body.Append(CreateParagraph("Дата                     _______________", size: 10));
         body.Append(CreateParagraph("Староста:          _______________         ___________________", size: 10));
@@ -304,7 +273,7 @@ public class AttendanceDocFiller : MonoBehaviour
         body.Append(CreateParagraph("ВЕДОМОСТЬ УЧЕТА ПЛАТНЫХ ОТРАБОТОК ЗА ___________________ 202__ г., курс   _______   Группа   ________________", size: 10));
         body.Append(CreateParagraph("                                                                                                         месяц", size: 10, isBold: false));
     }
-    private void CreateTitle3(Body body) {
+    private static void CreateTitle3(Body body) {
         body.Append(CreateParagraph(" ", size: 6));
         body.Append(CreateParagraph("Дата                     _______________", size: 10));
         body.Append(CreateParagraph("Староста:          _______________         ___________________", size: 10));
@@ -313,12 +282,12 @@ public class AttendanceDocFiller : MonoBehaviour
         body.Append(CreateParagraph("                                                                                                  (Ф.И.О.)", size: 9));
     }
 
-    private Paragraph CreateParagraphBreak(string text, int size = 12, Fonts font = Fonts.Calibri, bool isBold = true, bool isItalic = true, JustificationValues? justificationValues = null) {
+    private static Paragraph CreateParagraphBreak(string text, int size = 12, Fonts font = Fonts.Calibri, bool isBold = true, bool isItalic = true, JustificationValues? justificationValues = null) {
         Paragraph paragraph = CreateParagraph(text,size,font,isBold,isItalic,justificationValues);
         paragraph.Append(new Run(new Break() { Type = BreakValues.Page }));
         return paragraph;
     }
-    private Paragraph CreateParagraph(string text, int size = 12, Fonts font = Fonts.Calibri, bool isBold = true, bool isItalic = true, JustificationValues? justificationValues = null) {
+    private static Paragraph CreateParagraph(string text, int size = 12, Fonts font = Fonts.Calibri, bool isBold = true, bool isItalic = true, JustificationValues? justificationValues = null) {
         Paragraph paragraph = new Paragraph(
             new ParagraphProperties(
                 new SpacingBetweenLines
@@ -337,7 +306,7 @@ public class AttendanceDocFiller : MonoBehaviour
         );
         return paragraph;
     }
-    private Paragraph CreateCustomParagraph(string text1,string text2, int size = 12, Fonts font = Fonts.Calibri, bool isBold = true, bool isItalic = true, JustificationValues? justificationValues = null) {
+    private static Paragraph CreateCustomParagraph(string text1,string text2, int size = 12, Fonts font = Fonts.Calibri, bool isBold = true, bool isItalic = true, JustificationValues? justificationValues = null) {
 
         Paragraph paragraph = new Paragraph(
             new ParagraphProperties(
@@ -362,7 +331,7 @@ public class AttendanceDocFiller : MonoBehaviour
         );
         return paragraph;
     }
-    private TableCell CreateCell(string text, int size = 7, Fonts font = Fonts.Arial, bool isBold = true, bool isItalic = true, float? widthDxa = null, bool isCentr = false, JustificationValues? justificationValues = null) {
+    private static TableCell CreateCell(string text, int size = 7, Fonts font = Fonts.Arial, bool isBold = true, bool isItalic = true, float? widthDxa = null, bool isCentr = false, JustificationValues? justificationValues = null) {
         var props = new List<OpenXmlElement>
     {
         new RunFonts
@@ -401,7 +370,7 @@ public class AttendanceDocFiller : MonoBehaviour
 
         return cell;
     }
-    private TableCell CreateCellGrou(string text,int GrouCount = 1, int size = 7, Fonts font = Fonts.Arial, bool isBold = true, bool isItalic = true, float? widthDxa = null, bool isCentr = false, JustificationValues? justificationValues = null) {
+    private static TableCell CreateCellGrou(string text,int GrouCount = 1, int size = 7, Fonts font = Fonts.Arial, bool isBold = true, bool isItalic = true, float? widthDxa = null, bool isCentr = false, JustificationValues? justificationValues = null) {
         var props = new List<OpenXmlElement>
     {
         new RunFonts
@@ -444,7 +413,7 @@ public class AttendanceDocFiller : MonoBehaviour
 
         return cell;
     }
-    private TableCell CreateDiagonalCell(string text1, string text2, int size = 7, Fonts font = Fonts.Arial, bool isBold = true, bool isItalic = true,float? widthDxa = null, JustificationValues? justificationValues = null) {
+    private static TableCell CreateDiagonalCell(string text1, string text2, int size = 7, Fonts font = Fonts.Arial, bool isBold = true, bool isItalic = true,float? widthDxa = null, JustificationValues? justificationValues = null) {
         List<OpenXmlElement> openXmlElements = new() {
             new RunFonts
     {
@@ -503,7 +472,7 @@ public class AttendanceDocFiller : MonoBehaviour
         
         return diagCell;
     }
-    private TableCell CreateRotatedCell(string text, int size = 7, Fonts font = Fonts.Arial, bool isBold = true, bool isItalic = true, float? widthDxa = null, JustificationValues? justificationValues = null) {
+    private static TableCell CreateRotatedCell(string text, int size = 7, Fonts font = Fonts.Arial, bool isBold = true, bool isItalic = true, float? widthDxa = null, JustificationValues? justificationValues = null) {
         List<OpenXmlElement> openXmlElements = new() {
             new RunFonts
     {
@@ -538,7 +507,7 @@ public class AttendanceDocFiller : MonoBehaviour
         cell.Append(cellProps);
         return cell;
     }
-    private List<OpenXmlElement> CreateRunProperties(IEnumerable<OpenXmlElement> etc = null, int size = 12, Fonts font = Fonts.Calibri, bool isBold = true, bool isItalic = true) {
+    private static List<OpenXmlElement> CreateRunProperties(IEnumerable<OpenXmlElement> etc = null, int size = 12, Fonts font = Fonts.Calibri, bool isBold = true, bool isItalic = true) {
         var props = new List<OpenXmlElement>
         {
             new RunFonts
@@ -569,7 +538,7 @@ public class AttendanceDocFiller : MonoBehaviour
         Arial = 0,
         Calibri = 1,
     }
-    private string retFont(Fonts font) {
+    private static string retFont(Fonts font) {
         switch (font)
         {
             case Fonts.Arial:

@@ -6,16 +6,19 @@ using TMPro;
 using System;
 using System.Linq;
 using UnityEngine.Tilemaps;
+using UnityEngine.UI;
 using System.Threading.Tasks;
 using System.Collections;
+using UnityEngine.Serialization;
 
 public class FormingTabelDate : MonoBehaviour
 {
     public static FormingTabelDate Instance;
-    [SerializeField] TableObjectData tableObjectData;
+    [SerializeField] private GameObject redactorToolSwitcher;
+    [SerializeField] private TableObjectData tableObjectData;
     private TableTextCell tableTextCell => tableObjectData.tableTextCell;
-    private static GroupParsing _lastGroupParsing;
-    private static Group _lastGroup;
+    public static GroupParsing LastGroupParsing { get; private set; }
+    public static Group LastGroup { get; private set; }
 
     public static Dictionary<Vector2Int, bool> MissingStudent;
     private void Awake() {
@@ -31,7 +34,7 @@ public class FormingTabelDate : MonoBehaviour
 
     public void FormingTable(string groupNameForming) {
         GroupParsing groupParsing = Parsing.ParsingData1[groupNameForming];
-        _lastGroupParsing = groupParsing;
+        LastGroupParsing = groupParsing;
         
         Debug.Log($"Count Data in group {groupNameForming}: " + groupParsing.dateParses.Count);
         //TableObjectData.FormingTableCell(LoadingDataFireBase.StrudentName[Page].Count, Converter(groupParsing));
@@ -68,7 +71,7 @@ public class FormingTabelDate : MonoBehaviour
         if (!groupName_ContainsKey) { return; }
 
         Group group = FireBase.fireBaseData.Faculties[FacultyNameID].Specializations[specializationName].Years[yearName].Groups[groupName];
-        _lastGroup = group;
+        LastGroup = group;
         if (groupName_ContainsKey)
         {
             if (tableTextCell.TablePersonCell.Count != group.Students.Count)
@@ -98,7 +101,7 @@ public class FormingTabelDate : MonoBehaviour
             if (!isUpdate && (tableTextCell.TableLessonCell[idDate].Count != groupParsing.dateParses[idDate].Lessons.Count)) isUpdate = true;
             
         }
-
+        
         if (isUpdate)
         {
             tableObjectData.UpdateLessonCell(lessonCells);
@@ -121,7 +124,6 @@ public class FormingTabelDate : MonoBehaviour
 
                     foreach (StudentMissing studentMissing in studentMissings)
                     {
-                        Debug.Log(idNColumn + " " + studentMissing.ID + " " + studentMissing.Type);
                         MissingStudent.Add(new(idNColumn,studentMissing.ID), true);
                         CellTextN(tableTextCell.TableNCell[idNColumn][studentMissing.ID],
                             studentMissing.Type ? TypeCellN.valid : TypeCellN.disrespectful);
@@ -135,7 +137,27 @@ public class FormingTabelDate : MonoBehaviour
             }
             
         }
+
         
+        if (FireBase.fireBaseData.IsAdministration)
+        {
+            if (FireBase.fireBaseData.NameGroupAdministration.Contains(groupParsing.Name)){
+                redactorToolSwitcher.SetActive(true);
+                AddCertificate.SetActiveOpenRedactorButton(true);
+            }
+            else{
+                redactorToolSwitcher.SetActive(false);
+                AddCertificate.SetActiveOpenRedactorButton(false);
+                redactorToolSwitcher.GetComponent<Toggle>().isOn = false;
+            }
+        }
+        else
+        {
+            redactorToolSwitcher.SetActive(false);
+            AddCertificate.SetActiveOpenRedactorButton(false);
+            redactorToolSwitcher.GetComponent<Toggle>().isOn = false;
+        }
+
         StartCoroutine(timerReloadingTable());
 
     }
@@ -157,18 +179,24 @@ public class FormingTabelDate : MonoBehaviour
             else MissingStudent.Add(localSelectedCell.Key, localSelectedCell.Value);
             
             FindDateAndLessonAndStudent(localSelectedCell.Key,out string date, out int lessonID, out int studentID);
-            await FireBase.UpdateMissingStudents(_lastGroupParsing.Name,date,lessonID,studentID, localSelectedCell.Value);
-            
+            await FireBase.UpdateMissingStudents(LastGroupParsing.Name,date,lessonID,studentID, localSelectedCell.Value);
+            if (!(LastGroup.Dates[date].lessons[lessonID].StudentsMissing.RemoveAll(obj => obj.ID == studentID) > 0))
+                LastGroup.Dates[date].lessons[lessonID].StudentsMissing.Add(new()
+                {
+                    ID = studentID,
+                    Type = false
+                });
             SelectCells.LocalSelectedCells = new();
         }
         
+        
     }
 
-    private static void FindDateAndLessonAndStudent(Vector2Int position,out string date, out int lessonID, out int studentID)
+    public static void FindDateAndLessonAndStudent(Vector2Int position,out string date, out int lessonID, out int studentID)
     {
         date = DateTime.Today.ToString("dd-MM-yyyy");
         lessonID = -1;
-        List<DateParse> dateParses = _lastGroupParsing.dateParses;
+        List<DateParse> dateParses = LastGroupParsing.dateParses;
         for (int idDate = 0,idLessonColum = 0; idDate < dateParses.Count; idDate++)
         {
             List<string> lessons = dateParses[idDate].Lessons;
@@ -182,7 +210,7 @@ public class FormingTabelDate : MonoBehaviour
             }
         }
 
-        studentID = _lastGroup.Students[position.y].ID;
+        studentID = LastGroup.Students[position.y].ID;
     }
 
     public void TimeMissing(Vector2Int idPersonCell,bool isCreate)
@@ -237,19 +265,19 @@ public class FormingTabelDate : MonoBehaviour
         tableTextCell.GroupCell.text = Name;
     }
 
-    public IEnumerator timerReloadingTable() {
+    private IEnumerator timerReloadingTable() {
         yield return new WaitForSeconds(0f);
-        tableObjectData.gameObject.SetActive(false);
+        tableObjectData.TimeParent.SetActive(false);
         yield return new WaitForSeconds(0.1f);
-        tableObjectData.gameObject.SetActive(true);
+        tableObjectData.TimeParent.SetActive(true);
         yield return new WaitForSeconds(0.1f);
-        tableObjectData.gameObject.SetActive(false);
+        tableObjectData.TimeParent.SetActive(false);
         yield return new WaitForSeconds(0.1f);
-        tableObjectData.gameObject.SetActive(true);
+        tableObjectData.TimeParent.SetActive(true);
         yield return new WaitForSeconds(0.1f);
-        tableObjectData.gameObject.SetActive(false);
+        tableObjectData.TimeParent.SetActive(false);
         yield return new WaitForSeconds(0.1f);
-        tableObjectData.gameObject.SetActive(true);
+        tableObjectData.TimeParent.SetActive(true);
     }
 
 }

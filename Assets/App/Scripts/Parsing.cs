@@ -36,7 +36,7 @@ public class Parsing : MonoBehaviour
             ParsingGroupName = PlayerPrefs.GetString(GroupNamePlayerPrefs);
         else
             PlayerPrefs.SetString(GroupNamePlayerPrefs, ParsingGroupName);
-
+        _fireBase.Initialized();
     }
     private async void Start() {
         FireBase.ParsingFireBaseEnd += ParsingWebSite;
@@ -117,6 +117,7 @@ public class Parsing : MonoBehaviour
 
     private async Task<GroupParsing> ParsingMetod(string GroupName, bool updateData, DateTime? endDateTime = null) {
         endDateTime ??= defouldEndDateTime;
+        Debug.Log(endDateTime.ToString());
 
         GroupParsing groupParsing = new();
         groupParsing.Name = GroupName;
@@ -217,7 +218,6 @@ public class Parsing : MonoBehaviour
                         IList<DateParse> dateParsesTime = isNotFound ? dateParsesNotLoading.DatList : dateParses;
                         DateFill(DateNodes[idDate],out List<HtmlNode> LessonNodes,out List<HtmlNode> LessonTypeNodes);
                         idDate -= isNotFound ? 0 : NodesAdd;
-                        Debug.Log(idDate);
                         if (LessonNodes != null && LessonNodes.Count > 0)
                         {
                             List<string> LessonsName = ConvertToCollectionString(LessonNodes);
