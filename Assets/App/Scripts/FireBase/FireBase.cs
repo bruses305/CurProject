@@ -11,7 +11,6 @@ public class FireBase
     private static FireBase _instance;
 
     public static FireBaseData fireBaseData = new();
-    public static event EventHandler ParsingFireBaseEnd;
 
     private DatabaseReference reference;
     private FirebaseAuth _authPlayer;
@@ -119,15 +118,16 @@ public class FireBase
 
         GroupParsing groupParsing = new GroupParsing() { Name = baseGroupLoad };
 
-
         List<DatabaseReference> studentReferenceList = await GetChildAsync(groupReference, Student.Key);
-
+        
+        ProgressBar.Progress = 0.25f;
         if (studentReferenceList.Count > 0)
         {
             List<Student> students = new();
 
-            foreach (DatabaseReference studentReference in studentReferenceList)
+            for (int idStudent = 0;idStudent < studentReferenceList.Count;idStudent++)
             {
+                DatabaseReference studentReference = studentReferenceList.Find(obj=> obj.Key == Student.KeyChild + idStudent);
                 Student student = new Student()
                 {
                     Name = (await ReadValue(studentReference.Child(Student.Key_NAME))).ToString(),
@@ -144,18 +144,19 @@ public class FireBase
 
                 students.Add(student);
             }
-
+            
             group.Students = students;
         }
         else Debug.LogWarning("Data not found: LoadingForName, studentReference");
-
+        ProgressBar.Progress = 0.35f;
         List<DatabaseReference> dateReferenceList = GetDatesReference(groupReference, startDateTime, endDateTime);
         if (dateReferenceList.Count > 0)
         {
             Dictionary<string, Dates> dates = new();
-
+            
             foreach (DatabaseReference dateReference in dateReferenceList)
             {
+                ProgressBar.Progress += 0.65f / dateReferenceList.Count;
                 Dates date = new Dates();
                 DateParse dateParse = new() { dateTime = dateReference.Key };
 
@@ -230,7 +231,7 @@ public class FireBase
 
     private async Task<bool> LoadingForData(string baseGroupLoad, DateTime? startDateTime = null, DateTime? endDateTime = null)
     {
-
+        ProgressBar.Progress = 0;
         DateTime startDateTimeNn = startDateTime ?? Times.FbDefouldStartParsing;
         DateTime endDateTimeNn = endDateTime ?? Times.FbDefouldEndParsing;
         
@@ -292,6 +293,7 @@ public class FireBase
 
         if (baseGroupLoad != null)
         {
+            ProgressBar.Progress += 0.1f;
             DatabaseReference groupReference = await SearchGroupReference(baseGroupLoad);
             if (groupReference != null)
             {
@@ -308,7 +310,9 @@ public class FireBase
                     year = new Year() { Name = GroupNameDat[0] };
                     specialization.Years[GroupNameDat[0]] = year;
                 }
+                ProgressBar.Progress += 0.1f;
                 await FillGroup(baseGroupLoad,groupReference, year.Groups, startDateTimeNn, endDateTimeNn);
+                ProgressBar.Progress = 1f;
 
             }
             else
@@ -536,12 +540,16 @@ public class FireBase
         {
             DatabaseReference groupReference = await _instance.SearchGroupReference(groupName);
             DatabaseReference studentReference = groupReference.Child(Student.Key);
-            
+            ProgressBar.Progress = 0.1f;
             int childCount = await _instance.ChildCount(studentReference);
+            ProgressBar.Progress = 0.3f;
             DatabaseReference newStudent = studentReference.Child(Student.KeyChild + childCount);
             await _instance.UpdateData(newStudent, Student.Key_NAME, studentName);
+            ProgressBar.Progress = 0.6f;
             await _instance.UpdateData(newStudent, Student.Key_ID, childCount);
-            await _instance.UpdateData(newStudent, Student.Key_TYPE, typeStudent ? "Б" : "П");
+            ProgressBar.Progress = 0.9f;
+            await _instance.UpdateData(newStudent, Student.Key_TYPE, typeStudent);
+            ProgressBar.Progress = 1f;
 
             return true;
         }
@@ -553,12 +561,15 @@ public class FireBase
     }
     public static async Task CreateCertificate(string groupName,int studentID, string dateStart, string dateEnd)
     {
+        ProgressBar.Progress = 0.5f;
         DatabaseReference groupReference = await _instance.SearchGroupReference(groupName);
+        ProgressBar.Progress = 0.7f;
         DatabaseReference dateCertificateReference = groupReference.
             Child(Student.Key).Child("Student" + studentID).
             Child(Student.Key_CERTIFICATES).Child(dateEnd);
         
         await _instance.UpdateData(dateCertificateReference, Student.Key_CERTIFICATESSTART, dateStart);
+        ProgressBar.Progress = 1f;
     }
     
 

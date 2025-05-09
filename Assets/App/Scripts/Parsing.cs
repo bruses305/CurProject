@@ -37,13 +37,7 @@ public class Parsing : MonoBehaviour
         _fireBase.Initialized();
     }
     private async void Start() {
-        FireBase.ParsingFireBaseEnd += ParsingWebSite;
         await LoadingDefouldData(ParsingGroupName, true);
-    }
-
-    private void ParsingWebSite(object sender, EventArgs e) {
-        Debug.Log("All Parsing Web Site");
-        AllParsing();
     }
     public async Task LoadingDefouldData(string parsGroupName, bool isUpdate = false,DateTime? dateStart = null, DateTime? dateEnd = null) {
         int countParsingFail = 0;
@@ -74,42 +68,9 @@ public class Parsing : MonoBehaviour
         Debug.LogError("Error Loading Data");
 
     }
-    public void LastPage() {
-        
-    }
-    public void NextPage() {
-        
-    }
-    private async void AllParsing() {
-        List<string> GroupName = new();
-        foreach (var faculty in FireBase.fireBaseData.Faculties)
-        {
-            foreach (var specialithation in faculty.Specializations)
-            {
-                string name_specialithation = specialithation.Value.Name;
-                foreach (var year in specialithation.Value.Years)
-                {
-                    string name_year = year.Value.Name;
-                    foreach (var group in year.Value.Groups)
-                    {
-                        string name_group = group.Value.Name;
-                        GroupName.Add(name_year + name_specialithation + "-" + name_group);
-                    }
-                }
-            }
-        }
-        Debug.Log("GroupName" + GroupName.Count);
-        bool isUpdate = await _fireBase.isUpdate();
-        foreach (string groupName in GroupName)
-        {
-            GroupParsing groupParsing = await ParsingMetod(groupName, isUpdate);
-            if(groupParsing!=null) ParsingData1[groupName]= groupParsing;
-        }
-
-        Debug.Log("ParsingData1 CountGroup Parsing: " + ParsingData1.Count);
-    }
-
-    private async Task<GroupParsing> ParsingMetod(string GroupName, bool updateData, DateTime? endDateTime = null) {
+    private async Task<GroupParsing> ParsingMetod(string GroupName, bool updateData, DateTime? endDateTime = null)
+    {
+        ProgressBar.Progress = 0f;
         endDateTime ??= Times.PDefouldEndParsing;
 
         GroupParsing groupParsing = new();
@@ -123,7 +84,7 @@ public class Parsing : MonoBehaviour
             {
                 using (var client = new HttpClient(hdl))
                 {
-                    using (HttpResponseMessage resp = await client.GetAsync(POLESSU_URL_TYPE_2 + GroupAndDate))
+                    using (HttpResponseMessage resp = await client.GetAsync(POLESSU_URL_TYPE_2 + GroupAndDate + endDateTime))
                     {
                         if (resp.IsSuccessStatusCode)
                         {
@@ -138,7 +99,9 @@ public class Parsing : MonoBehaviour
                                 var tables = document.DocumentNode.SelectSingleNode(POLESSU_FILE2);
                                 try
                                 {
+                                    ProgressBar.Progress = 0.32f;
                                     (await WorkingTabelsType2(tables, groupParsing.Name, updateData, endDateTime)).ForEach(groupParsing.dateParses.Add);
+                                    ProgressBar.Progress = 1f;
                                 }
                                 catch
                                 {
@@ -198,12 +161,13 @@ public class Parsing : MonoBehaviour
                             NodesAdd = i;
                     }
                 }
-
+                ProgressBar.Progress = 0.4f;
                 HtmlNodeCollection DateNodes = table.SelectNodes(".//div[@class='row acty-group']"); // ��� ������ tbody
                 if (DateNodes is { Count: > 0 })
                 {
                     for (int DateID = 0, DateNotFound = 0; (DateID + NodesAdd < DateNodes.Count && DateID < dateParses.Count) || DateNotFound < dateParsesNotLoading.Count; DateID++, DateNotFound++)
                     {
+                        ProgressBar.Progress += 0.6f / (dateParses.Count + dateParsesNotLoading.Count);
                         bool isNotFound = DateNotFound < dateParsesNotLoading.Count;
                         int idDate = isNotFound ? dateParsesNotLoading.IntList[DateNotFound] : DateID + NodesAdd;
                         if (isNotFound) DateID--;
@@ -309,7 +273,6 @@ public class Parsing : MonoBehaviour
         if (token.IsCancellationRequested !=true)
         {
             token.Dispose();
-            Debug.Log("Error Connecting " + taskType);
         }
         else
         {

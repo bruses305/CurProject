@@ -24,6 +24,7 @@ public class RedactSelectedCells : MonoBehaviour
     {
         await FormingTabelDate.MergingMissingStudent();
         SetActiveButton(false);
+        ProgressBar.Progress = 1;
     }
     
     private void CanselRedactingMissingStudent()

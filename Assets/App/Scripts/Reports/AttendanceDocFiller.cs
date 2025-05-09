@@ -21,27 +21,16 @@ public static class AttendanceDocFiller
     private const float LEFTTABLE = -0.76f;
     public static void Create(string path,List<StudentAttendance> students,List<StudentJustificationDocument> jasts,List<StudentMakeupEntry> makeup, bool isopenToEnd = false) {
         isOpenToEnd = isopenToEnd;
-        /*
-
-        
-        List<StudentMakeupEntry> Makeup = new()
-        {
-            new()
-            {
-                FullName = "Лагун С.C.",
-                Hours = 4,
-                Subject = "СТОЭИ"
-            }
-        };*/
         CreateReport(path,
             students,
             jasts,
             makeup);
     }
     private static void CreateReport(string path, List<StudentAttendance> attendanceList, List<StudentJustificationDocument> justifications, List<StudentMakeupEntry> makeupEntries) {
-        //try
-        //{
-            using (WordprocessingDocument doc = WordprocessingDocument.Create(path, WordprocessingDocumentType.Document))
+        try
+        {
+            using (WordprocessingDocument
+                   doc = WordprocessingDocument.Create(path, WordprocessingDocumentType.Document))
             {
                 var mainPart = doc.AddMainDocumentPart();
                 mainPart.Document = new Document(new Body());
@@ -61,7 +50,7 @@ public static class AttendanceDocFiller
                 // 1. Таблица посещаемости
                 body.Append(CreateAttendanceTable(attendanceList));
 
-                body.Append(CreateParagraph(" ",size: 10)); // Разделитель
+                body.Append(CreateParagraph(" ", size: 10)); // Разделитель
 
                 // 2. Таблица справок
                 body.Append(CreateJustificationTable(justifications));
@@ -71,14 +60,14 @@ public static class AttendanceDocFiller
                 body.Append(CreateMakeupTable(makeupEntries));
                 mainPart.Document.Save();
                 CreateTitle3(body);
+            }
+
+            if (isOpenToEnd) Process.Start(path);
         }
-            
-            if(isOpenToEnd) Process.Start(path);
-        //}
-        //catch
-        //{
-        //    Debug.LogError("убедитесь что файл не открыт");
-        //}
+        catch
+        {
+            Debug.LogError("убедитесь что файл не открыт");
+        }
     }
 
     private static Table CreateAttendanceTable(List<StudentAttendance> students) {
@@ -178,8 +167,7 @@ public static class AttendanceDocFiller
         table.Append(header);
         table.Append(header2);
 
-        List<StudentJustificationDocument> listClone = list.ToList();
-        for (int i = 0;i < list.Count;i++)
+        for (int i = 0;list.Count > 0;)
         {
             TableRow row = new TableRow();
             row.AppendChild(new TableRowProperties(
@@ -189,20 +177,20 @@ public static class AttendanceDocFiller
             StudentJustificationDocument justS = list.Find(obj=>obj.typeJust == StudentJustificationDocument.TypeJust.Справка);
             row.Append(CreateCell(justS?.Name, 10, Fonts.Calibri, false));
             row.Append(CreateCell(justS?.Value, 10, Fonts.Calibri, false));
-            if (justS != null) i++;
-            listClone.Remove(justS);
-
+            if (justS?.Name != null) i++;
+            list.Remove(justS);
+            
             StudentJustificationDocument justZ = list.Find(obj=>obj.typeJust == StudentJustificationDocument.TypeJust.Заявление);
             row.Append(CreateCell(justZ?.Name, 10, Fonts.Calibri, false));
             row.Append(CreateCell(justZ?.Value, 10, Fonts.Calibri, false));
-            if (justZ != null) i++;
-            listClone.Remove(justZ);
+            if (justZ?.Name != null) i++;
+            list.Remove(justZ);
             
             StudentJustificationDocument justR = list.Find(obj=>obj.typeJust == StudentJustificationDocument.TypeJust.Распоряжение);
             row.Append(CreateCell(justR?.Name, 10, Fonts.Calibri, false));
             row.Append(CreateCell(justR?.Value, 10, Fonts.Calibri, false));
-            if (justR != null) i++;
-            listClone.Remove(justR);
+            if (justR?.Name != null) i++;
+            list.Remove(justR);
 
             table.Append(row);
         }

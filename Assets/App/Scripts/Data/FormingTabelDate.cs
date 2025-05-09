@@ -141,21 +141,18 @@ public class FormingTabelDate : MonoBehaviour
         {
             if (FireBase.fireBaseData.NameGroupAdministration.Contains(groupParsing.Name)){
                 redactorToolSwitcher.SetActive(true);
-                AddCertificate.SetActiveOpenRedactorButton(true);
-                AddStudent.SetActiveOpenRedactorButton(true);
+                AddData.SetActiveOpenRedactorButton(true);
             }
             else{
                 redactorToolSwitcher.SetActive(false);
-                AddCertificate.SetActiveOpenRedactorButton(false);
-                AddStudent.SetActiveOpenRedactorButton(false);
+                AddData.SetActiveOpenRedactorButton(false);
                 redactorToolSwitcher.GetComponent<Toggle>().isOn = false;
             }
         }
         else
         {
             redactorToolSwitcher.SetActive(false);
-            AddCertificate.SetActiveOpenRedactorButton(false);
-            AddStudent.SetActiveOpenRedactorButton(false);
+            AddData.SetActiveOpenRedactorButton(false);
             redactorToolSwitcher.GetComponent<Toggle>().isOn = false;
         }
 
@@ -174,8 +171,10 @@ public class FormingTabelDate : MonoBehaviour
     }
     public static async Task MergingMissingStudent()
     {
+        ProgressBar.Progress = 0.3f;
         foreach (var localSelectedCell in SelectCells.LocalSelectedCells)
         {
+            ProgressBar.Progress += 0.7f/SelectCells.LocalSelectedCells.Count;
             if(!localSelectedCell.Value) MissingStudent.Remove(localSelectedCell.Key);
             else MissingStudent.Add(localSelectedCell.Key, localSelectedCell.Value);
             
@@ -189,7 +188,7 @@ public class FormingTabelDate : MonoBehaviour
                 });
             SelectCells.LocalSelectedCells = new();
         }
-        
+        ProgressBar.Progress = 0.99f;
         
     }
 

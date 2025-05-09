@@ -3,39 +3,47 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
-
-public class AddCertificate : MonoBehaviour
+[Serializable]
+public class AddCertificate
 {
     private static AddCertificate _instance;
     [SerializeField] private GameObject creatorCertificate;
-    [SerializeField] private TMP_InputField studentName;
-    [SerializeField] private TMP_InputField dateStart;
-    [SerializeField] private TMP_InputField dateEnd;
     [SerializeField] private Button openCertificateRedactor;
-    [SerializeField] private Button createCertificate;
+    
+    private TMP_InputField _studentName;
+    private TMP_InputField _dateStart;
+    private TMP_InputField _dateEnd;
+    private Button _createCertificate;
+
+    private const string Key_PARENT_CREATOR_OBJECT_NAME = "Certificate";
+    private const string Key_PARENT_DATA_NAME = "Data";
+    private const string Key_BUTTON_CREATE_OBJECT_NAME = "Create";
+    private const string Key_TMP_STUDENT = "StudentName";
+    private const string Key_TMP_DATE_START = "DateStart";
+    private const string Key_TMP_DATE_END = "DateEnd";
     
     private string GroupName => FormingTabelDate.LastGroupParsing.Name;
     private List<Student> Students => FormingTabelDate.LastGroup.Students;
     private bool _onStartEditing;
 
-    private void Awake()
+    public void Awake()
     {
+        InitializeLoadObjects();
         _instance = this;
+        _studentName.onSubmit.AddListener((_) => StartInputStudentName());
+        _studentName.onEndEdit.AddListener((_) => EndInputStudentName());
         
-        studentName.onSubmit.AddListener((_) => StartInputStudentName());
-        studentName.onEndEdit.AddListener((_) => EndInputStudentName());
+        _dateStart.onSubmit.AddListener((_) => StartInputDate(_dateStart));
+        _dateStart.onEndEdit.AddListener((_) =>   EndInputDate(_dateStart));
         
-        dateStart.onSubmit.AddListener((_) => StartInputDate(dateStart));
-        dateStart.onEndEdit.AddListener((_) =>   EndInputDate(dateStart));
-        
-        dateEnd.onSelect.AddListener((_) => StartInputDate(dateEnd));
-        dateEnd.onDeselect.AddListener((_) =>   EndInputDate(dateEnd));
+        _dateEnd.onSelect.AddListener((_) => StartInputDate(_dateEnd));
+        _dateEnd.onDeselect.AddListener((_) =>   EndInputDate(_dateEnd));
         
         openCertificateRedactor.onClick.AddListener(ActivateCreateCertificate);
-        createCertificate.onClick.AddListener(CreateCertificate);
+        _createCertificate.onClick.AddListener(CreateCertificate);
         
         creatorCertificate.SetActive(false);
-        openCertificateRedactor.gameObject.SetActive(false);
+        SetActiveOpenRedactorButton(false);
         
     }
 
@@ -47,18 +55,18 @@ public class AddCertificate : MonoBehaviour
 
     private async void CreateCertificate()
     {
-        bool isDate = DateTime.TryParse(dateStart.text, out DateTime dateStartDate);
-        isDate = DateTime.TryParse(dateEnd.text, out DateTime dateEndDate) && isDate;
+        bool isDate = DateTime.TryParse(_dateStart.text, out DateTime dateStartDate);
+        isDate = DateTime.TryParse(_dateEnd.text, out DateTime dateEndDate) && isDate;
         if (dateStartDate > dateEndDate)
         {
-            dateEnd.textComponent.color = Color.red;
+            _dateEnd.textComponent.color = Color.red;
             return;
         }
         if (_onStartEditing && isDate)
         {
             ActivateCreateCertificate();
             
-            await FireBase.CreateCertificate(GroupName, Students.FindIndex(obj => obj.Name == studentName.text),
+            await FireBase.CreateCertificate(GroupName, Students.FindIndex(obj => obj.Name == _studentName.text),
                 dateStartDate.ToString("dd-MM-yyyy"),
                 dateEndDate.ToString("dd-MM-yyyy"));
             
@@ -82,23 +90,71 @@ public class AddCertificate : MonoBehaviour
     }
     private void StartInputStudentName()
     {
-        studentName.textComponent.color = Color.white;
+        _studentName.textComponent.color = Color.white;
         _onStartEditing = true;
     }
     private void EndInputStudentName()
     {
-        if (!Students.Exists(obj => obj.Name == studentName.text))
+        if (!Students.Exists(obj => obj.Name == _studentName.text))
         {
             _onStartEditing=false;
-            studentName.textComponent.color = Color.red;
+            _studentName.textComponent.color = Color.red;
         }
     }
     private void ClearAllInputField()
     {
-        studentName.text = "";
-        dateStart.text = "";
-        dateEnd.text = "";
+        _studentName.text = "";
+        _dateStart.text = "";
+        _dateEnd.text = "";
     }
-    
+
+    private void InitializeLoadObjects()
+    {
+        foreach (Transform parentCreatorObject in creatorCertificate.transform)
+        {
+            if (parentCreatorObject.name == Key_PARENT_CREATOR_OBJECT_NAME)
+            {
+                bool isLeave = false;
+                foreach (Transform creatorObject in parentCreatorObject)
+                {
+                    if (creatorObject.name == Key_PARENT_DATA_NAME)
+                    {
+                        foreach (Transform dataTMP in creatorObject)
+                        {
+                            if (dataTMP.name == Key_TMP_STUDENT)
+                            {
+                                _studentName = dataTMP.GetChild(1).gameObject.GetComponent<TMP_InputField>();
+                            }
+                            else if (dataTMP.name == Key_TMP_DATE_START)
+                            {
+                                _dateStart = dataTMP.GetChild(1).gameObject.GetComponent<TMP_InputField>();
+                            }
+                            else if(dataTMP.name == Key_TMP_DATE_END)
+                            {
+                                _dateEnd = dataTMP.GetChild(1).gameObject.GetComponent<TMP_InputField>();
+                            }
+                        }
+                        if (isLeave)
+                        {
+                            
+                            return;
+                        }
+                        isLeave = true;
+                    }
+                    if (creatorObject.name == Key_BUTTON_CREATE_OBJECT_NAME)
+                    {
+                        _createCertificate = creatorObject.gameObject.GetComponent<Button>();
+                        if (isLeave)
+                        {
+                            return;
+                        }
+                        isLeave = true;
+                    }
+                }
+            }
+        }
+        
+        Debug.LogError("FailLoadObject");
+    }
     
 }

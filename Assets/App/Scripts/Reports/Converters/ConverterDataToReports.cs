@@ -72,7 +72,12 @@ public static class ConverterDataToReports
             if(!missingStudent.Value) continue;
             
             FormingTabelDate.FindDateAndLessonAndStudent(missingStudent.Key, out string date, out int lessonID,out int studentID);
-
+            
+            if (LastGroup.Dates[date].lessons[lessonID].StudentsMissing.Find(obj=>obj.ID == studentID).Type) continue;
+            
+            if (LastGroup.Dates[date].lessons[lessonID].type is not (LessonFireBase.TypeLesson.Practice
+                or LessonFireBase.TypeLesson.PhysicalEducation or LessonFireBase.TypeLesson.Laboratory)) continue;
+            
             string lessonName = LastGroup.Dates[date].lessons[lessonID].Name;
             int makeupID = makeups.FindIndex(obj => obj.StudentID == studentID && obj.Subject == lessonName);
             
