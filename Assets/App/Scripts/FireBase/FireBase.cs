@@ -27,7 +27,7 @@ public class FireBase
         {
             reference = FirebaseDatabase.DefaultInstance.RootReference;
             _authPlayer = FirebaseAuth.DefaultInstance;
-
+            
             object connectingTest = await ReadValue(reference.Child("Connection").Child("Test"));
             Debug.Log(connectingTest is bool != true ? "Fail Connection" : "successful connection, Initialization End");
         }
@@ -40,7 +40,9 @@ public class FireBase
         try
         {
             Debug.Log("Start Pars FB");
+            await LockUser();
             if(!_isStartLoading) await StartLoadingDataFb();
+            
             bool data = await LoadingForData(groupName, startDateTime, endDateTime);
             return data;
         }
@@ -48,6 +50,29 @@ public class FireBase
         {
             Debug.LogError(e.Message);
             return false;
+        }
+    }
+    private async Task LockUser()
+    {
+        DatabaseReference blockReference = reference.Child(FireBaseData.Key_BLOCK);
+        object isBlock = await ReadValue(blockReference.Child(StartLoadingData.UUID));
+        if (isBlock == null)
+        {
+            
+            await UpdateData(blockReference,StartLoadingData.UUID, false);
+            DatabaseReference deviceReference = reference.Child(FireBaseData.Key_DEVICES);
+            await UpdateData(deviceReference.Child(StartLoadingData.UUID),"DeviceModel", SystemInfo.deviceModel);
+            await UpdateData(deviceReference.Child(StartLoadingData.UUID),"deviceName", SystemInfo.deviceName);
+            await UpdateData(deviceReference.Child(StartLoadingData.UUID),"deviceType", SystemInfo.deviceType.ToString());
+            await UpdateData(deviceReference.Child(StartLoadingData.UUID),"systemMemorySize", SystemInfo.systemMemorySize);
+            await UpdateData(deviceReference.Child(StartLoadingData.UUID),"processorModel", SystemInfo.processorModel);
+            
+        }
+        if (Convert.ToBoolean(isBlock))
+        {
+            Notification.SendNotificationMessage("ВЫ ЗАБАНЕНЫ †††", Color.red,10f);
+            await Task.Delay(500);
+            ExitApp.Exit();
         }
     }
 
@@ -128,7 +153,11 @@ public class FireBase
             
             group.Students = students;
         }
+//#if UNITY_EDITOR
+        
         else Debug.LogWarning("Data not found: LoadingForName, studentReference");
+        
+//#endif
         ProgressBar.Progress = 0.35f;
         List<DatabaseReference> dateReferenceList = GetDatesReference(groupReference, startDateTime, endDateTime);
         if (dateReferenceList.Count > 0)
@@ -224,10 +253,8 @@ public class FireBase
 
         if (facultyList.Count > 0)
         {
-            Debug.Log("Test");
             foreach (Faculty faculty in facultyList)
             {
-                Debug.Log("Test2");
                 if (baseGroupLoad == null)
                 {
                     Dictionary<string, Specialization> specializations = new();
@@ -272,9 +299,7 @@ public class FireBase
         if (baseGroupLoad != null)
         {
             ProgressBar.Progress += 0.1f;
-            Debug.Log("Test3");
             DatabaseReference groupReference = await SearchGroupReference(baseGroupLoad);
-            Debug.Log("Test3");
             if (groupReference != null)
             {
                 int idFaculty = fireBaseData.Faculties.FindIndex(obj=>obj.Name == facultyName);
@@ -515,46 +540,46 @@ public class FireBase
         try
         {
             if (DateTime.Parse(date) >= Times.TimeAdd3Day) { return true; }
-            DatabaseReference reference_Lesson = referenceGroup
+            DatabaseReference referenceLesson = referenceGroup
                 .Child(Dates.Key).Child(date)
                 .Child(LessonFireBase.Key);
 
-            List<DatabaseReference> AllLesson = await GetChildAsync(reference_Lesson);
-            for (int i = 0;i <= AllLesson.Count; i++)
+            List<DatabaseReference> allLesson = await GetChildAsync(referenceLesson);
+            for (int idLesson = 0;idLesson <= allLesson.Count; idLesson++)
             {
-                if (i == AllLesson.Count)
+                if (idLesson == allLesson.Count)
                 {
-                    for (; i < names.Count; i++)
+                    for (; idLesson < names.Count; idLesson++)
                     {
-                        DatabaseReference newLesson = reference_Lesson.Child(LessonFireBase.Key + i);
+                        DatabaseReference newLesson = referenceLesson.Child(LessonFireBase.Key + idLesson);
 
-                        await UpdateData(newLesson, LessonFireBase.Key_NAME, names[i]);
-                        await UpdateData(newLesson, LessonFireBase.Key_TYPE, LessonFireBase.ConvertToString(types[i]));
+                        await UpdateData(newLesson, LessonFireBase.Key_NAME, names[idLesson]);
+                        await UpdateData(newLesson, LessonFireBase.Key_TYPE, LessonFireBase.ConvertToString(types[idLesson]));
                     }
                     break;
                 }
 
-                DatabaseReference lesson = AllLesson[i];
+                DatabaseReference lesson = allLesson[idLesson];
 
-                if (i == names.Count)
+                if (idLesson == names.Count)
                 {
-                    for (; i < AllLesson.Count; i++)
+                    for (; idLesson < allLesson.Count; idLesson++)
                     {
                         await DeleteLesson(lesson);
                     }
                     break;
                 }
 
-                bool isNewLesson = (await ReadValue(lesson.Child(LessonFireBase.Key_NAME))).ToString() != names[i] || (await ReadValue(lesson.Child(LessonFireBase.Key_TYPE))).ToString() != types[i].ToString();
+                bool isNewLesson = (await ReadValue(lesson.Child(LessonFireBase.Key_NAME))).ToString() != names[idLesson] || (await ReadValue(lesson.Child(LessonFireBase.Key_TYPE))).ToString() != types[idLesson].ToString();
 
 
                 if (false && isNewLesson)
                 {
                     await DeleteLesson(lesson);
 
-                    DatabaseReference newLesson = reference_Lesson.Child(LessonFireBase.Key + i);
-                    await UpdateData(newLesson, LessonFireBase.Key_NAME, names[i]);
-                    await UpdateData(newLesson, LessonFireBase.Key_TYPE, LessonFireBase.ConvertToString(types[i]));
+                    DatabaseReference newLesson = referenceLesson.Child(LessonFireBase.Key + idLesson);
+                    await UpdateData(newLesson, LessonFireBase.Key_NAME, names[idLesson]);
+                    await UpdateData(newLesson, LessonFireBase.Key_TYPE, LessonFireBase.ConvertToString(types[idLesson]));
                 }
                 
                 
@@ -671,31 +696,11 @@ public class FireBase
 
         return certificatesList;
     }
-    public async Task<bool> isCreatingDate(string date, DatabaseReference groupReference)
+    public async Task<bool> IsCreatingDate(string date, DatabaseReference groupReference)
     {
         DatabaseReference dateReference = groupReference.Child(Dates.Key).Child(date);
         int childCount = await ChildCount(dateReference);
-        if (childCount > 0)
-            return false;
-        else
-            return true;
-    }
-    public async Task<bool> isUpdate() {
-        string DateTimeNow = DateTime.Now.Day + "-" + DateTime.Now.Month + "-" + DateTime.Now.Year + "-" + DateTime.Now.Hour;
-        DatabaseReference updateReference = reference.Child(FireBaseData.Key_CONNECTION).Child(FireBaseData.Key_UPDATEALL);
-        if(Convert.ToBoolean(
-            await ReadValue(updateReference.Child(DateTimeNow))
-            ))
-        {
-            Debug.Log("isUpdate false");
-            return false;
-        }
-        else
-        {
-            Debug.Log("isUpdate true");
-            await UpdateData(updateReference, DateTimeNow, true);
-            return true;
-        }
+        return childCount == 0;
     }
     private async Task DeleteLesson(DatabaseReference lessonReference) {
         try
@@ -705,10 +710,11 @@ public class FireBase
             {
                 if(item.Key == StudentMissing.Key)
                 {
-                    List<DatabaseReference> childReferenceStudentMissing = await GetChildAsync(item, StudentMissing.Key);
-                    foreach (var itemStudent in childReferenceGroup)
+                    List<DatabaseReference> childReferenceStudentMissing = await GetChildAsync(item);
+                    foreach (var itemStudent in childReferenceStudentMissing)
                     {
-                        await itemStudent.RemoveValueAsync();
+                        await itemStudent.Child(StudentMissing.Key_ID).RemoveValueAsync();
+                        await itemStudent.Child(StudentMissing.Key_TYPE).RemoveValueAsync();
                     }
                 }
                 else

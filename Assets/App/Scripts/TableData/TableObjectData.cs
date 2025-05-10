@@ -154,16 +154,10 @@ public class TableObjectData : MonoBehaviour
         }
     }
     private void CRCChildObject(Transform parent, GameObject prefab, int positionColum, int count = 1) {
-        if (count < parent.childCount)
-        {
-            DestoroyChildObject(parent.gameObject, count);
-            ClearChildObject(parent.gameObject);
-        }
-        else
-        {
-            ClearChildObject(parent.gameObject);
-            CreateChildObject(parent, prefab, positionColum, count - parent.childCount);
-        }
+        
+            DestoroyChildObject(parent.gameObject);
+            CreateChildObject(parent, prefab, positionColum, count);
+        
     }
 
     public static void DestoroyChildObject(GameObject parent,int indexStart = 0, int indexEnd = int.MaxValue) {
@@ -192,10 +186,14 @@ public class TableObjectData : MonoBehaviour
                 Debug.LogError("����������� parentPerson.childCount �� ���������");
                 return;
             }
-            GameObject TMPObject = parent.transform.GetChild(i).GetChild(0).gameObject;
-            TMPObject.TryGetComponent(out TextMeshProUGUI TMP);
-            if(TMP!=null)
-                TMP.text = "";
+            Transform tmpParentObject = parent.transform.GetChild(i);
+            if (tmpParentObject.childCount > 0)
+            {
+                GameObject tmpObject = tmpParentObject.GetChild(0).gameObject;
+                tmpObject.TryGetComponent(out TextMeshProUGUI TMP);
+                if (TMP != null)
+                    TMP.text = "";
+            }
         }
     }
 

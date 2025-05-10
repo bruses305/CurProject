@@ -43,33 +43,30 @@ public class Parsing : MonoBehaviour
         int countParsingFail = 0;
         do
         {
-            bool FB = await TimeTrigger(_fireBase.LoadingData(parsGroupName,dateStart, dateEnd), 10); 
-            
-            if (FB)
+            bool FB = await TimeTrigger(_fireBase.LoadingData(parsGroupName, dateStart, dateEnd), 10);
+
+            ParsingDataDefould = await TimeTrigger(ParsingMetod(parsGroupName, isUpdate, dateEnd, !FB));
+            if (ParsingDataDefould != null || FB)
             {
-                ParsingDataDefould = await TimeTrigger(ParsingMetod(parsGroupName, isUpdate, dateEnd));
-                if (ParsingDataDefould != null)
-                {
-                    //await fireBase.CreateGroup(ParsingDataDefould.Name);
-                    PlayerPrefs.SetString(GroupNamePlayerPrefs, parsGroupName);
-                    ParsingGroupName = parsGroupName;
-                    ParsingData1[parsGroupName].MergingObjectDate(ParsingDataDefould?.DateParses);
-                    Debug.Log("EndDefouldParsing");
-                    PageEvent.Invoke(this, EventArgs.Empty);  
-                                                             
-                    return;
-                }
+                //await fireBase.CreateGroup(ParsingDataDefould.Name);
+                PlayerPrefs.SetString(GroupNamePlayerPrefs, parsGroupName);
+                ParsingGroupName = parsGroupName;
+                ParsingData1[parsGroupName].MergingObjectDate(ParsingDataDefould?.DateParses);
+                Debug.Log("EndDefouldParsing");
+                PageEvent.Invoke(this, EventArgs.Empty);
+
+                return;
             }
+
             countParsingFail++;
-        }
-        while (countParsingFail < FAIL_LIMIT);
+        } while (countParsingFail < FAIL_LIMIT);
 
         // ������� ����� �������� �������� ������������ � fireBase
         Debug.LogError("Error Loading Data");
         ProgressBar.ErrorProgress("Error Loading Data");
 
     }
-    private async Task<GroupParsing> ParsingMetod(string GroupName, bool updateData, DateTime? endDateTime = null)
+    private async Task<GroupParsing> ParsingMetod(string GroupName, bool updateData, DateTime? endDateTime = null, bool testingGroup = false)
     {
         ProgressBar.Progress = 0f;
         endDateTime ??= Times.PDefouldEndParsing;
@@ -101,12 +98,14 @@ public class Parsing : MonoBehaviour
                                 try
                                 {
                                     ProgressBar.Progress = 0.32f;
-                                    (await WorkingTabelType2(tables, groupParsing.Name, updateData, endDateTime)).ForEach(groupParsing.DateParses.Add);
+                                    (await WorkingTabelType2(tables, groupParsing.Name, updateData, endDateTime, testingGroup)).ForEach(groupParsing.DateParses.Add);
                                     ProgressBar.Progress = 1f;
                                 }
                                 catch
                                 {
                                     Debug.LogWarning("Data ParsingMetod2 WorkingTabelsType2 not foundit");
+                                    ProgressBar.ErrorProgress("Рассписание не загружено");
+                                    return null;
                                 }
 
                             }
@@ -136,7 +135,7 @@ public class Parsing : MonoBehaviour
         }
         return HTMLInnerText;
     }
-    private async Task<List<DateParse>> WorkingTabelType2(HtmlNode table, string groupName, bool updateData, DateTime? endDateTime) {
+    private async Task<List<DateParse>> WorkingTabelType2(HtmlNode table, string groupName, bool updateData, DateTime? endDateTime, bool testingGroup = false) {
         List<DateParse> dateParses = new();
         ListAndInt<DateParse> dateParsesNotLoading = new(){DatList = new List<DateParse>(), IntList = new List<int>()};
         DatabaseReference groupReference = !updateData? null:await _fireBase.SearchGroupReference(groupName);
@@ -147,13 +146,14 @@ public class Parsing : MonoBehaviour
             HtmlNodeCollection dateNodesName = table.SelectNodes(".//small[@class='text-muted']");
             if (dateNodesName is { Count: > 1 })
             {
+                if (testingGroup) await _fireBase.CreateGroup(groupName);
                 List<string> DateNodesName = ConvertToCollectionString(dateNodesName, new() {0}); // ��������� ���� �� ������� ����� ����������
                 int NodesAdd = int.MaxValue;
                 for (int i = 0;i< DateNodesName.Count;i++)
                 {
                     DateTime timeLesson = ConvertStringToDateTime(DateNodesName[i]);
                     string dateString = timeLesson.Day + "-" + timeLesson.Month + "-" + timeLesson.Year;
-                    if (timeLesson < Times.Today && await _fireBase.isCreatingDate(dateString, groupReference))
+                    if (timeLesson < Times.Today && await _fireBase.IsCreatingDate(dateString, groupReference))
                         dateParsesNotLoading.Add(new DateParse { dateTime = dateString }, i);
                     if (timeLesson >= Times.Today && timeLesson <= endDateTime)
                     {
@@ -204,12 +204,14 @@ public class Parsing : MonoBehaviour
             else
             {
                 Debug.LogWarning("small[@class='text-muted ��� �� ����������");
+                return null;
             }
 
         }
         else
         {
             Debug.LogWarning("��� ����������");
+            return null;
         }
 
         return dateParses;

@@ -4,19 +4,19 @@ using UnityEngine.Serialization;
 
 public class LoadingScreen : MonoBehaviour
 {
-    public static LoadingScreen Instance;
+    private static LoadingScreen _instance;
     [SerializeField]private GameObject loadingScreenObject;
 
     private void Start()
     {
-        Instance = this;
+        _instance = this;
     }
 
     public void Activate() {
-        Instance.loadingScreenObject.SetActive(true);
+        _instance.loadingScreenObject.SetActive(true);
     }
 
     public void DiesActivate() {
-        Instance.loadingScreenObject.SetActive(false);
+        _instance.loadingScreenObject.SetActive(false);
     }
 }

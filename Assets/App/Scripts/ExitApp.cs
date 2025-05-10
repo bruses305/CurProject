@@ -1,8 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace App.Scripts
-{
     public class ExitApp : MonoBehaviour
     {
         [SerializeField] private Button exitButton;
@@ -12,9 +10,8 @@ namespace App.Scripts
             exitButton.onClick.AddListener(Exit);
         }
 
-        private void Exit()
+        public static void Exit()
         {
             Application.Quit();
         }
     }
-}
