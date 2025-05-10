@@ -53,7 +53,7 @@ public class Parsing : MonoBehaviour
                     //await fireBase.CreateGroup(ParsingDataDefould.Name);
                     PlayerPrefs.SetString(GroupNamePlayerPrefs, parsGroupName);
                     ParsingGroupName = parsGroupName;
-                    ParsingData1[parsGroupName].MergingObjectDate(ParsingDataDefould?.dateParses);
+                    ParsingData1[parsGroupName].MergingObjectDate(ParsingDataDefould?.DateParses);
                     Debug.Log("EndDefouldParsing");
                     PageEvent.Invoke(this, EventArgs.Empty);  
                                                              
@@ -66,6 +66,7 @@ public class Parsing : MonoBehaviour
 
         // ������� ����� �������� �������� ������������ � fireBase
         Debug.LogError("Error Loading Data");
+        ProgressBar.ErrorProgress("Error Loading Data");
 
     }
     private async Task<GroupParsing> ParsingMetod(string GroupName, bool updateData, DateTime? endDateTime = null)
@@ -84,7 +85,7 @@ public class Parsing : MonoBehaviour
             {
                 using (var client = new HttpClient(hdl))
                 {
-                    using (HttpResponseMessage resp = await client.GetAsync(POLESSU_URL_TYPE_2 + GroupAndDate + endDateTime))
+                    using (HttpResponseMessage resp = await client.GetAsync(POLESSU_URL_TYPE_2 + GroupAndDate + (endDateTime.Value.Year + "-" + endDateTime.Value.Month + "-" + endDateTime.Value.Day)))
                     {
                         if (resp.IsSuccessStatusCode)
                         {
@@ -100,7 +101,7 @@ public class Parsing : MonoBehaviour
                                 try
                                 {
                                     ProgressBar.Progress = 0.32f;
-                                    (await WorkingTabelsType2(tables, groupParsing.Name, updateData, endDateTime)).ForEach(groupParsing.dateParses.Add);
+                                    (await WorkingTabelType2(tables, groupParsing.Name, updateData, endDateTime)).ForEach(groupParsing.DateParses.Add);
                                     ProgressBar.Progress = 1f;
                                 }
                                 catch
@@ -128,14 +129,14 @@ public class Parsing : MonoBehaviour
         List<string> HTMLInnerText = new();
         for(int i = 0; i < htmlNode.Count; i++)
         {
-            if(DontConvert==null||!DontConvert.All(obj => obj == i))
+            if(DontConvert==null|| DontConvert.Any(obj => obj != i))
             {
                 HTMLInnerText.Add(htmlNode[i].InnerText);
             }
         }
         return HTMLInnerText;
     }
-    private async Task<List<DateParse>> WorkingTabelsType2(HtmlNode table, string groupName, bool updateData, DateTime? endDateTime) {
+    private async Task<List<DateParse>> WorkingTabelType2(HtmlNode table, string groupName, bool updateData, DateTime? endDateTime) {
         List<DateParse> dateParses = new();
         ListAndInt<DateParse> dateParsesNotLoading = new(){DatList = new List<DateParse>(), IntList = new List<int>()};
         DatabaseReference groupReference = !updateData? null:await _fireBase.SearchGroupReference(groupName);
@@ -152,9 +153,9 @@ public class Parsing : MonoBehaviour
                 {
                     DateTime timeLesson = ConvertStringToDateTime(DateNodesName[i]);
                     string dateString = timeLesson.Day + "-" + timeLesson.Month + "-" + timeLesson.Year;
-                    if (timeLesson < DateTime.Today && await _fireBase.isCreatingDate(dateString, groupReference))
+                    if (timeLesson < Times.Today && await _fireBase.isCreatingDate(dateString, groupReference))
                         dateParsesNotLoading.Add(new DateParse { dateTime = dateString }, i);
-                    if (timeLesson >= DateTime.Today && timeLesson <= endDateTime)
+                    if (timeLesson >= Times.Today && timeLesson <= endDateTime)
                     {
                         dateParses.Add(new DateParse { dateTime = dateString });
                         if (NodesAdd == int.MaxValue)
@@ -227,7 +228,8 @@ public class Parsing : MonoBehaviour
             IntList.Add(id);
         }
     }
-    public static DateTime ConvertStringToDateTime(string data) {
+
+    private static DateTime ConvertStringToDateTime(string data) {
 
         DateTime.TryParseExact(data, "d.M", null, System.Globalization.DateTimeStyles.None, out DateTime time);
         return time;

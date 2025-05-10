@@ -14,7 +14,7 @@ public class FireBase
 
     private DatabaseReference reference;
     private FirebaseAuth _authPlayer;
-    private static bool isAdminLoading = false;
+    private static bool _isStartLoading = false;
 
     private string facultyName;
     public FireBase(){
@@ -40,7 +40,7 @@ public class FireBase
         try
         {
             Debug.Log("Start Pars FB");
-            if(!isAdminLoading) await Administration();
+            if(!_isStartLoading) await StartLoadingDataFb();
             bool data = await LoadingForData(groupName, startDateTime, endDateTime);
             return data;
         }
@@ -49,25 +49,6 @@ public class FireBase
             Debug.LogError(e.Message);
             return false;
         }
-    }
-    private async Task<bool> Administration() {
-        DatabaseReference AdministrationReference = reference.Child(FireBaseData.Key_ADMINISTRATION).Child(StartLoadingData.UUID);
-        if (AdministrationReference != null) isAdminLoading = true;
-        
-        List<string> AdministrationGroupEnum = (await ReadValueEnum<string>(AdministrationReference));
-
-        if (AdministrationGroupEnum.Count > 0)
-        {
-            fireBaseData.IsAdministration = true;
-
-            fireBaseData.NameGroupAdministration = AdministrationGroupEnum;
-        }
-        else
-        {
-            fireBaseData.IsAdministration = false;
-        }
-        return true;
-
     }
 
     private async Task<List<DatabaseReference>> ParsClassData<T>(DatabaseReference reference, Dictionary<string, T> fireBaseDataDictionary, bool addConditions = false, int addConditionsReference = 0) where T : IFireBaseData, new() {
@@ -215,7 +196,7 @@ public class FireBase
 
                     date.lessons = lessons;
                     dates[dateReference.Key] = date;
-                    groupParsing.dateParses.Add(dateParse);
+                    groupParsing.DateParses.Add(dateParse);
                 }
                 //else Debug.Log("Data not found: LoadingForName, lessonReference");
 
@@ -237,22 +218,20 @@ public class FireBase
         
         string[] GroupNameDat = RedactSearchText.ConverterGroupNameData(baseGroupLoad).ToArray(); 
         
-            if (GroupNameDat.Length != 3) return false;
+            if (GroupNameDat[0] == null) return false;
 
-            List<DatabaseReference> facultyReferenceList = await GetChildAsync(reference, Faculty.key);
+            List<Faculty> facultyList = fireBaseData.Faculties;
 
-        if (facultyReferenceList.Count > 0)
+        if (facultyList.Count > 0)
         {
-            foreach (DatabaseReference facultyReference in facultyReferenceList)
+            Debug.Log("Test");
+            foreach (Faculty faculty in facultyList)
             {
-                Faculty faculty = new Faculty()
-                {
-                    Name = facultyReference.Key
-                };
+                Debug.Log("Test2");
                 if (baseGroupLoad == null)
                 {
                     Dictionary<string, Specialization> specializations = new();
-                    List<DatabaseReference> specializationReferenceList = await ParsClassData(facultyReference, specializations/*, GroupNameDat, 1*/);
+                    List<DatabaseReference> specializationReferenceList = await ParsClassData(faculty.Reference, specializations/*, GroupNameDat, 1*/);
 
                     foreach (DatabaseReference specializationReference in specializationReferenceList)
                     {
@@ -286,7 +265,6 @@ public class FireBase
 
                     faculty.Specializations = specializations;
                 }
-                fireBaseData.Faculties.Add(faculty);
             }
         }
         else Debug.LogError("Data not found: LoadingForName, facultiesReferenceList");
@@ -294,7 +272,9 @@ public class FireBase
         if (baseGroupLoad != null)
         {
             ProgressBar.Progress += 0.1f;
+            Debug.Log("Test3");
             DatabaseReference groupReference = await SearchGroupReference(baseGroupLoad);
+            Debug.Log("Test3");
             if (groupReference != null)
             {
                 int idFaculty = fireBaseData.Faculties.FindIndex(obj=>obj.Name == facultyName);
@@ -313,7 +293,6 @@ public class FireBase
                 ProgressBar.Progress += 0.1f;
                 await FillGroup(baseGroupLoad,groupReference, year.Groups, startDateTimeNn, endDateTimeNn);
                 ProgressBar.Progress = 1f;
-
             }
             else
             {
@@ -321,6 +300,61 @@ public class FireBase
             }
         }
         return true;
+    }
+
+
+    private async Task StartLoadingDataFb()
+    {
+        bool adminLoad = await Administration();
+        bool facultyLoad = await StartLoadingFaculty();
+        _isStartLoading = adminLoad && facultyLoad;
+    }
+    private async Task<bool> Administration() {
+        try
+        {
+            DatabaseReference administrationReference = reference.Child(FireBaseData.Key_ADMINISTRATION).Child(StartLoadingData.UUID);
+            if (administrationReference == null) return false;
+        
+            List<string> administrationGroupEnum = (await ReadValueEnum<string>(administrationReference));
+
+            if (administrationGroupEnum.Count > 0)
+            {
+                fireBaseData.IsAdministration = true;
+
+                fireBaseData.NameGroupAdministration = administrationGroupEnum;
+            }
+            else
+            {
+                fireBaseData.IsAdministration = false;
+            }
+            return true;
+        }
+        catch (Exception e)
+        {
+            Debug.LogError(e.Message);
+            return false;
+        }
+
+    }
+    private async Task<bool> StartLoadingFaculty()
+    {
+        List<DatabaseReference> facultyReferenceList = await GetChildAsync(reference, Faculty.key);
+
+        if (facultyReferenceList.Count > 0)
+        {
+            foreach (DatabaseReference facultyReference in facultyReferenceList)
+            {
+                Faculty faculty = new Faculty(facultyReference)
+                {
+                    Name = facultyReference.Key
+                };
+                fireBaseData.Faculties.Add(faculty);
+            }
+
+            if (fireBaseData.Faculties.Count > 0) return true;
+        }
+
+        return false;
     }
 
     #region WorkData
@@ -332,7 +366,7 @@ public class FireBase
             await reference_Data.GetValueAsync().ContinueWith(task =>
             {
                 //DataSnapshot result = task?.Result;
-                totalChildren = task?.Result.Value;
+                totalChildren = task?.Result?.Value;
                 //Do more stuff
             });
 
@@ -343,15 +377,14 @@ public class FireBase
             return null;
         }
     }
-    private static async Task<List<DatabaseReference>> ReadReferenceEnum(DatabaseReference reference_Data) {
+    private static async Task<List<DatabaseReference>> ReadReferenceEnum(DatabaseReference referenceData) {
         try
         {
-            List<DataSnapshot> totalChildren = new();
             List<DatabaseReference> totalChildrenRef = new();
 
-            await reference_Data.GetValueAsync().ContinueWith(task =>
+            await referenceData.GetValueAsync().ContinueWith(task =>
             {
-                totalChildren = task.Result.Children.ToList();
+                List<DataSnapshot> totalChildren = task.Result.Children.ToList();
                 totalChildren.ForEach(obj => totalChildrenRef.Add(obj.Reference));
                 //Do more stuff
             });
@@ -360,7 +393,7 @@ public class FireBase
         }
         catch
         {
-            return null;
+            return new();
         }
     }
     private async Task<List<T>> ReadValueEnum<T>(DatabaseReference reference_Data){
@@ -383,12 +416,12 @@ public class FireBase
             return new();
         }
     }
-    private async Task<int> ChildCount(DatabaseReference reference_Data) {
+    private async Task<int> ChildCount(DatabaseReference referenceData) {
         try
         {
             int totalChildren = 0;
 
-            await reference_Data.GetValueAsync().ContinueWith(task =>
+            await referenceData.GetValueAsync().ContinueWith(task =>
             {
                 totalChildren = (int)task.Result.ChildrenCount;
                 //Do more stuff
@@ -731,16 +764,12 @@ public class FireBase
     private async Task<string> FindFaculty(string name) {
         string facultyNameDefould = "New";
 
-        string[] groupData = RedactSearchText.ConverterGroupNameData(name);
-
-        List<DatabaseReference> facultyReferenceList = await GetChildAsync(reference, Faculty.key);
-
-        foreach (var facultyReference in facultyReferenceList)
+        foreach (Faculty faculty in fireBaseData.Faculties)
         {
-            DatabaseReference specializationReference = facultyReference.Child(Specialization.key).Child(name);
+            DatabaseReference specializationReference = faculty.Reference.Child(Specialization.key).Child(name);
 
-            if((await ChildCount(specializationReference))>0)
-                    return facultyReference.Key;
+            if (await ChildCount(specializationReference) > 0)
+                return faculty.Reference.Key;
         }
 
         return facultyNameDefould;
@@ -749,19 +778,18 @@ public class FireBase
     public async Task<DatabaseReference> SearchGroupReference(string name) {
         string[] groupData = RedactSearchText.ConverterGroupNameData(name);
 
-        List<DatabaseReference> facultyReferenceList = await GetChildAsync(reference, Faculty.key);
-
-        foreach (var facultyReference in facultyReferenceList)
+        foreach (Faculty faculty in fireBaseData.Faculties)
         {
-            DatabaseReference specializationReference = facultyReference.Child(Specialization.key).Child(groupData[1]);
+            DatabaseReference specializationReference = faculty.Reference.Child(Specialization.key).Child(groupData[1]);
+            DatabaseReference yearReference = specializationReference.Child(Year.key).Child(groupData[0]);
 
-            List<DatabaseReference> GroupReferenceList = await GetChildAsync(specializationReference.Child(Year.key).Child(groupData[0]), Group.key);
-            foreach (var GroupReference in GroupReferenceList)
+            List<DatabaseReference> groupReferenceList = await GetChildAsync(yearReference, Group.key);
+            foreach (var groupReference in groupReferenceList)
             {
-                if ((await ReadValue(GroupReference.Child(Group.Key_NAME))).ToString() == groupData[2])
+                if (groupReference.Key == groupData[2])
                 {
-                    facultyName = facultyReference.Key;
-                    return GroupReference;
+                    facultyName = faculty.Reference.Key;
+                    return groupReference;
                 }
             }
         }

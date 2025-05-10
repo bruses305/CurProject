@@ -1,26 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
-using UnityEngine;
 using Color = DocumentFormat.OpenXml.Wordprocessing.Color;
 using Debug = UnityEngine.Debug;
-using TypeJust = StudentJustificationDocument.TypeJust;
 
 public static class AttendanceDocFiller
 {
-    public static bool isOpenToEnd;
-    private const int CM = 567;
-    private const float TOPBODY = 0.75f;
-    private const float BUTTONBODY = 0.5f;
-    private const float LEFTBODY = 1.27f;
-    private const float RIGHTBODY = 1.27f;
-    private const float LEFTTABLE = -0.76f;
-    public static void Create(string path,List<StudentAttendance> students,List<StudentJustificationDocument> jasts,List<StudentMakeupEntry> makeup, bool isopenToEnd = false) {
-        isOpenToEnd = isopenToEnd;
+    private static bool _isOpenToEnd;
+    private const int Key_CM = 567;
+    private const float Key_TOP_BODY = 0.75f;
+    private const float Key_BUTTON_BODY = 0.5f;
+    private const float Key_LEFT_BODY = 1.27f;
+    private const float Key_RIGHT_BODY = 1.27f;
+    private const float Key_LEFT_TABLE = -0.76f;
+    private const float Key_HEIGHT_ROWS = (0.42f * Key_CM);
+    public static void Create(string path,List<StudentAttendance> students,List<StudentJustificationDocument> jasts,List<StudentMakeupEntry> makeup, bool isOpenToEnd = false) {
+        _isOpenToEnd = isOpenToEnd;
         CreateReport(path,
             students,
             jasts,
@@ -33,16 +31,16 @@ public static class AttendanceDocFiller
                    doc = WordprocessingDocument.Create(path, WordprocessingDocumentType.Document))
             {
                 var mainPart = doc.AddMainDocumentPart();
-                mainPart.Document = new Document(new Body());
-                var body = mainPart.Document.Body;
+                var body = new Body();
+                mainPart.Document = new Document(body);
                 // Добавляем настройки страницы
                 body.AppendChild(new SectionProperties(
                     new PageMargin
                     {
-                        Top = Convert.ToInt32(CM * TOPBODY),
-                        Bottom = Convert.ToInt32(CM * BUTTONBODY),
-                        Left = Convert.ToUInt32(CM * LEFTBODY),
-                        Right = Convert.ToUInt32(CM * RIGHTBODY)
+                        Top = Convert.ToInt32(Key_CM * Key_TOP_BODY),
+                        Bottom = Convert.ToInt32(Key_CM * Key_BUTTON_BODY),
+                        Left = Convert.ToUInt32(Key_CM * Key_LEFT_BODY),
+                        Right = Convert.ToUInt32(Key_CM * Key_RIGHT_BODY)
                     }
                 ));
 
@@ -62,7 +60,7 @@ public static class AttendanceDocFiller
                 CreateTitle3(body);
             }
 
-            if (isOpenToEnd) Process.Start(path);
+            if (_isOpenToEnd) Process.Start(path);
         }
         catch
         {
@@ -76,7 +74,7 @@ public static class AttendanceDocFiller
              new TableIndentation
              {
                  Type = TableWidthUnitValues.Dxa, // можно также Pct
-                 Width = Convert.ToInt32(CM * LEFTTABLE) // 720 dxa = 0.5 дюйма ≈ 1.27 см
+                 Width = Convert.ToInt32(Key_CM * Key_LEFT_TABLE) // 720 dxa = 0.5 дюйма ≈ 1.27 см
              },
             new TableLayout { Type = TableLayoutValues.Fixed }, 
             new TableBorders(
@@ -93,21 +91,21 @@ public static class AttendanceDocFiller
         
         // Заголовок
         TableRow header = new TableRow();
-        header.Append(CreateCell("№ п/п", 7, Fonts.Arial, widthDxa: 0.44f));
+        header.Append(CreateCell("№ п/п", widthDxa: 0.44f));
         header.Append(CreateDiagonalCell("Дата","ФИО", widthDxa: 2.91f));
         header.Append(CreateCell("Форма обучения", widthDxa: 0.44f));
         for (int i = 1; i <= 30; i++)
-            header.Append(CreateCell(i.ToString(), widthDxa: 0.44f,isCentr: true));
+            header.Append(CreateCell(i.ToString(), widthDxa: 0.44f,isCenter: true));
         header.Append(CreateRotatedCell("ИТОГО", 8, Fonts.Calibri, widthDxa: 0.44f));
         header.Append(CreateRotatedCell("По  уваж.", 8, Fonts.Calibri, widthDxa: 0.44f));
         header.Append(CreateRotatedCell("Без  уваж.", 8, Fonts.Calibri, widthDxa: 0.44f));
         table.Append(header);
-        float HeightRows = (0.42f * CM);
+        
         for (int idStudent = 0;idStudent< students.Count;idStudent++)
         {
             TableRow row = new TableRow();
             row.AppendChild(new TableRowProperties(
-    new TableRowHeight { Val = Convert.ToUInt32(HeightRows), HeightType = HeightRuleValues.Exact } // или Exact
+    new TableRowHeight { Val = Convert.ToUInt32(Key_HEIGHT_ROWS), HeightType = HeightRuleValues.Exact } // или Exact
 ));
             row.Append(CreateCell((idStudent+1).ToString(), widthDxa: 0.44f));
             row.Append(CreateCell(students[idStudent].FullName, 8, Fonts.Calibri,false, widthDxa: 2.91f));
@@ -129,7 +127,7 @@ public static class AttendanceDocFiller
             new TableIndentation
             {
                 Type = TableWidthUnitValues.Dxa, // можно также Pct
-                Width = Convert.ToInt32(CM * LEFTTABLE) // 720 dxa = 0.5 дюйма ≈ 1.27 см
+                Width = Convert.ToInt32(Key_CM * Key_LEFT_TABLE) // 720 dxa = 0.5 дюйма ≈ 1.27 см
             },
             new TableLayout { Type = TableLayoutValues.Fixed }, 
             new TableBorders(
@@ -141,11 +139,10 @@ public static class AttendanceDocFiller
             new InsideVerticalBorder { Val = BorderValues.Single, Size = 4 }
         )));
 
-        float HeightRows = (0.42f * CM);
         // Заголовки
         TableRow header = new TableRow();
         header.AppendChild(new TableRowProperties(
-    new TableRowHeight { Val = Convert.ToUInt32(HeightRows), HeightType = HeightRuleValues.Exact } // или Exact
+    new TableRowHeight { Val = Convert.ToUInt32(Key_HEIGHT_ROWS), HeightType = HeightRuleValues.Exact } // или Exact
 ));
         header.Append(CreateCellGrou("Справки", 2, 10, Fonts.Calibri, widthDxa: 7f,justificationValues: JustificationValues.Center));
         header.Append(CreateCellGrou("Заявления", 2, 10, Fonts.Calibri, widthDxa: 6.22f, justificationValues: JustificationValues.Center));
@@ -153,7 +150,7 @@ public static class AttendanceDocFiller
 
         TableRow header2 = new TableRow();
         header2.AppendChild(new TableRowProperties(
-    new TableRowHeight { Val = Convert.ToUInt32(HeightRows), HeightType = HeightRuleValues.Exact } // или Exact
+    new TableRowHeight { Val = Convert.ToUInt32(Key_HEIGHT_ROWS), HeightType = HeightRuleValues.Exact } // или Exact
 ));
         header2.Append(CreateCell("Ф.И.О.", 10, Fonts.Calibri, false, justificationValues: JustificationValues.Center, widthDxa: 3.25f));
         header2.Append(CreateCell("Дата",  10, Fonts.Calibri, false, justificationValues: JustificationValues.Center, widthDxa: 3.75f));
@@ -167,29 +164,29 @@ public static class AttendanceDocFiller
         table.Append(header);
         table.Append(header2);
 
-        for (int i = 0;list.Count > 0;)
+        for (;list.Count > 0;)
         {
             TableRow row = new TableRow();
             row.AppendChild(new TableRowProperties(
-                new TableRowHeight { Val = Convert.ToUInt32(HeightRows), HeightType = HeightRuleValues.Exact } // или Exact
+                new TableRowHeight { Val = Convert.ToUInt32(Key_HEIGHT_ROWS), HeightType = HeightRuleValues.Exact } // или Exact
             ));
 
             StudentJustificationDocument justS = list.Find(obj=>obj.typeJust == StudentJustificationDocument.TypeJust.Справка);
             row.Append(CreateCell(justS?.Name, 10, Fonts.Calibri, false));
             row.Append(CreateCell(justS?.Value, 10, Fonts.Calibri, false));
-            if (justS?.Name != null) i++;
+
             list.Remove(justS);
             
             StudentJustificationDocument justZ = list.Find(obj=>obj.typeJust == StudentJustificationDocument.TypeJust.Заявление);
             row.Append(CreateCell(justZ?.Name, 10, Fonts.Calibri, false));
             row.Append(CreateCell(justZ?.Value, 10, Fonts.Calibri, false));
-            if (justZ?.Name != null) i++;
+
             list.Remove(justZ);
             
             StudentJustificationDocument justR = list.Find(obj=>obj.typeJust == StudentJustificationDocument.TypeJust.Распоряжение);
             row.Append(CreateCell(justR?.Name, 10, Fonts.Calibri, false));
             row.Append(CreateCell(justR?.Value, 10, Fonts.Calibri, false));
-            if (justR?.Name != null) i++;
+
             list.Remove(justR);
 
             table.Append(row);
@@ -210,7 +207,6 @@ public static class AttendanceDocFiller
                 new InsideHorizontalBorder { Val = BorderValues.Single, Size = 4 },
                 new InsideVerticalBorder { Val = BorderValues.Single, Size = 4 }
         )));
-        float HeightRows = (0.42f * CM);
 
         TableRow header = new TableRow();
 
@@ -223,7 +219,7 @@ public static class AttendanceDocFiller
         {
             TableRow row = new TableRow();
             row.AppendChild(new TableRowProperties(
-    new TableRowHeight { Val = Convert.ToUInt32(HeightRows), HeightType = HeightRuleValues.Exact } // или Exact
+    new TableRowHeight { Val = Convert.ToUInt32(Key_HEIGHT_ROWS), HeightType = HeightRuleValues.Exact } // или Exact
 ));
             row.Append(CreateCell(m.FullName, 10, Fonts.Calibri, false, widthDxa: 4.93f));
             row.Append(CreateCell(m.Subject, 10, Fonts.Calibri, false, widthDxa: 10.23f));
@@ -276,7 +272,7 @@ public static class AttendanceDocFiller
                     Line = "0",     // межстрочный интервал — 240 = 12 pt
                     LineRule = LineSpacingRuleValues.Exact // или Exactly, AtLeast
                 },
-                new Justification { Val = justificationValues != null ? justificationValues : JustificationValues.Left }
+                new Justification { Val = justificationValues ?? JustificationValues.Left }
             ),
             new Run(
                 new RunProperties(CreateRunProperties(size: size, isBold: isBold)),
@@ -310,15 +306,15 @@ public static class AttendanceDocFiller
         );
         return paragraph;
     }
-    private static TableCell CreateCell(string text, int size = 7, Fonts font = Fonts.Arial, bool isBold = true, bool isItalic = true, float? widthDxa = null, bool isCentr = false, JustificationValues? justificationValues = null) {
+    private static TableCell CreateCell(string text, int size = 7, Fonts font = Fonts.Arial, bool isBold = true, bool isItalic = true, float? widthDxa = null, bool isCenter = false, JustificationValues? justificationValues = null) {
         var props = new List<OpenXmlElement>
     {
         new RunFonts
     {
-        Ascii = retFont(font),
-        HighAnsi = retFont(font),
-        EastAsia = retFont(font),
-        ComplexScript = retFont(font)
+        Ascii = RetFont(font),
+        HighAnsi = RetFont(font),
+        EastAsia = RetFont(font),
+        ComplexScript = RetFont(font)
     },
         new FontSize { Val = (size * 2).ToString() },
         new Color { Val = "000000" }
@@ -328,12 +324,12 @@ public static class AttendanceDocFiller
         if (isItalic) props.Add(new Italic());
 
         var cellProps = new TableCellProperties();
-        if (widthDxa.HasValue) cellProps.Append(new TableCellWidth { Type = TableWidthUnitValues.Dxa, Width = (Convert.ToInt32(widthDxa.Value * CM)).ToString(), });
-        if (isCentr) cellProps.Append(new TableCellVerticalAlignment { Val = TableVerticalAlignmentValues.Center });
+        if (widthDxa.HasValue) cellProps.Append(new TableCellWidth { Type = TableWidthUnitValues.Dxa, Width = (Convert.ToInt32(widthDxa.Value * Key_CM)).ToString(), });
+        if (isCenter) cellProps.Append(new TableCellVerticalAlignment { Val = TableVerticalAlignmentValues.Center });
 
         var cell = new TableCell(
             new Paragraph(new ParagraphProperties(
-                new Justification { Val = justificationValues != null ? justificationValues : JustificationValues.Left }
+                new Justification { Val = justificationValues ?? JustificationValues.Left }
             ),
                 new Run(
                     new RunProperties(props),
@@ -349,15 +345,15 @@ public static class AttendanceDocFiller
 
         return cell;
     }
-    private static TableCell CreateCellGrou(string text,int GrouCount = 1, int size = 7, Fonts font = Fonts.Arial, bool isBold = true, bool isItalic = true, float? widthDxa = null, bool isCentr = false, JustificationValues? justificationValues = null) {
+    private static TableCell CreateCellGrou(string text,int grouCount = 1, int size = 7, Fonts font = Fonts.Arial, bool isBold = true, bool isItalic = true, float? widthDxa = null, bool isCenter = false, JustificationValues? justificationValues = null) {
         var props = new List<OpenXmlElement>
     {
         new RunFonts
     {
-        Ascii = retFont(font),
-        HighAnsi = retFont(font),
-        EastAsia = retFont(font),
-        ComplexScript = retFont(font)
+        Ascii = RetFont(font),
+        HighAnsi = RetFont(font),
+        EastAsia = RetFont(font),
+        ComplexScript = RetFont(font)
     },
         new FontSize { Val = (size * 2).ToString() },
         new Color { Val = "000000" }
@@ -366,8 +362,8 @@ public static class AttendanceDocFiller
         if (isItalic) props.Add(new Italic());
 
         var cellProps = new TableCellProperties();
-        if (widthDxa.HasValue) cellProps.Append(new TableCellWidth { Type = TableWidthUnitValues.Dxa, Width = (Convert.ToInt32(widthDxa.Value * CM)).ToString(), });
-        if (isCentr) cellProps.Append(new TableCellVerticalAlignment { Val = TableVerticalAlignmentValues.Center });
+        if (widthDxa.HasValue) cellProps.Append(new TableCellWidth { Type = TableWidthUnitValues.Dxa, Width = (Convert.ToInt32(widthDxa.Value * Key_CM)).ToString(), });
+        if (isCenter) cellProps.Append(new TableCellVerticalAlignment { Val = TableVerticalAlignmentValues.Center });
 
         var cell = new TableCell(
             new TableCellProperties(
@@ -376,7 +372,7 @@ public static class AttendanceDocFiller
                 )),
             new Paragraph(
                 new ParagraphProperties(
-                new Justification { Val = justificationValues != null ? justificationValues : JustificationValues.Left }
+                new Justification { Val = justificationValues ?? JustificationValues.Left }
             ),
                 new Run(
                     new RunProperties(props),
@@ -396,10 +392,10 @@ public static class AttendanceDocFiller
         List<OpenXmlElement> openXmlElements = new() {
             new RunFonts
     {
-        Ascii = retFont(font),
-        HighAnsi = retFont(font),
-        EastAsia = retFont(font),
-        ComplexScript = retFont(font)
+        Ascii = RetFont(font),
+        HighAnsi = RetFont(font),
+        EastAsia = RetFont(font),
+        ComplexScript = RetFont(font)
     },
                     new FontSize { Val = (size * 2).ToString() },      // 12pt
                     new Color { Val = "000000" }      // чёрный
@@ -410,7 +406,7 @@ public static class AttendanceDocFiller
         var cellProps = new TableCellProperties();
         if (widthDxa.HasValue)
         {
-            cellProps.Append(new TableCellWidth { Type = TableWidthUnitValues.Dxa, Width = (Convert.ToInt32(widthDxa.Value * CM)).ToString(), });
+            cellProps.Append(new TableCellWidth { Type = TableWidthUnitValues.Dxa, Width = (Convert.ToInt32(widthDxa.Value * Key_CM)).ToString(), });
         }
 
         TableCell diagCell = new TableCell();
@@ -455,10 +451,10 @@ public static class AttendanceDocFiller
         List<OpenXmlElement> openXmlElements = new() {
             new RunFonts
     {
-        Ascii = retFont(font),
-        HighAnsi = retFont(font),
-        EastAsia = retFont(font),
-        ComplexScript = retFont(font)
+        Ascii = RetFont(font),
+        HighAnsi = RetFont(font),
+        EastAsia = RetFont(font),
+        ComplexScript = RetFont(font)
     },
                     new FontSize { Val = (size * 2).ToString() },      // 12pt
                     new Color { Val = "000000" }      // чёрный
@@ -469,7 +465,7 @@ public static class AttendanceDocFiller
         var cellProps = new TableCellProperties();
         if (widthDxa.HasValue)
         {
-            cellProps.Append(new TableCellWidth { Type = TableWidthUnitValues.Dxa, Width = (Convert.ToInt32(widthDxa.Value * CM)).ToString(), });
+            cellProps.Append(new TableCellWidth { Type = TableWidthUnitValues.Dxa, Width = (Convert.ToInt32(widthDxa.Value * Key_CM)).ToString(), });
         }
 
         TableCell cell = new TableCell(
@@ -491,10 +487,10 @@ public static class AttendanceDocFiller
         {
             new RunFonts
             {
-                Ascii = retFont(font),
-                HighAnsi = retFont(font),
-                EastAsia = retFont(font),
-                ComplexScript = retFont(font)
+                Ascii = RetFont(font),
+                HighAnsi = RetFont(font),
+                EastAsia = RetFont(font),
+                ComplexScript = RetFont(font)
             },
             new FontSize { Val = (size * 2).ToString() },
             new Color { Val = "000000" },
@@ -517,7 +513,7 @@ public static class AttendanceDocFiller
         Arial = 0,
         Calibri = 1,
     }
-    private static string retFont(Fonts font) {
+    private static string RetFont(Fonts font) {
         switch (font)
         {
             case Fonts.Arial:

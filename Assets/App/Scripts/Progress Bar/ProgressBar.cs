@@ -27,6 +27,12 @@ public class ProgressBar : MonoBehaviour
         progressGameObject.SetActive(false);
     }
 
+    public static void ErrorProgress(string message)
+    {
+        Progress = 1;
+        Notification.SendNotificationMessage(message, Color.red,1f);
+    }
+
     private static void SetProgress()
     {
         if (Progress < 1)

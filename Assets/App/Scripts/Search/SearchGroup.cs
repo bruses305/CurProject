@@ -9,14 +9,8 @@ public class SearchGroup : MonoBehaviour
 
     public async void Search() {
         string groupName = searchPanel.text;
-        LoadingScreenActivate();
         Debug.Log("Search: " + groupName + ";" + SelectedDates.DateStart + ";" + SelectedDates.DateEnd);
         await parsingObject.LoadingDefouldData(RedactSearchText.UpperText(groupName), true, SelectedDates.DateStart, SelectedDates.DateEnd);
 
-    }
-
-    private static void LoadingScreenActivate()
-    {
-        LoadingScreen.Instance.Activate();
     }
 }

@@ -1,9 +1,12 @@
+using System.Collections;
 using UnityEngine;
 using TMPro;
+using UnityEngine.UI;
 
 public class StartLoadingData : MonoBehaviour
 {
-    [SerializeField] private TextMeshProUGUI UUIDText;
+    [SerializeField] private Button UUIDTextCopy;
+    [SerializeField] private TextMeshProUGUI NotificationText;
     private const string UUID_PLayerPrefs = "UUID";
     public static string UUID;
     private void Awake() {
@@ -14,9 +17,19 @@ public class StartLoadingData : MonoBehaviour
         else {
             UUID = PlayerPrefs.GetString(UUID_PLayerPrefs);
         }
+        
+        NotificationText.gameObject.SetActive(false);
     }
 
     private void Start() {
-        UUIDText.text = "UUID: " + UUID;
+        UUIDTextCopy.GetComponent<Button>().onClick.AddListener(CopyUUID);
     }
+
+    private void CopyUUID()
+    {
+        GUIUtility.systemCopyBuffer = UUID;
+        Notification.SendNotificationMessage("Скопированно");
+    }
+
+    
 }

@@ -98,12 +98,6 @@ public class Diagram : MonoBehaviour
         }
         return array;
     }
-    /*public async void Search() {
-        string searchText = searchPanel.text.ToUpper();
-        string[] groupData = FormingTabelDate.ConverterGroupNameData(searchText);
-        if (groupData[2] != null)
-            await parsingObject.LoadingDefouldData(searchText);
-    }*/
 
     private void FilingMesh(GameObject gameObject, Material material, Vector3[] vertices, int[] triangles) {
         Mesh mesh = new Mesh();
@@ -199,7 +193,7 @@ public class Diagram : MonoBehaviour
         {
             if (parent.transform.childCount <= indexStart)
             {
-                Debug.LogError("Колличество parentPerson.childCount не совпадает");
+                Debug.LogError("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ parentPerson.childCount пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ");
                 return;
             }
             GameObject chiled = parent.transform.GetChild(i).gameObject;

@@ -85,18 +85,18 @@ public class FormingTabelDate : MonoBehaviour
         }
         else { Debug.LogError("Fail Loading Group"); }
 
-        for (int idCell = 0; idCell < tableTextCell.TableDateCell.Count && idCell < groupParsing.dateParses.Count; idCell++) // ��������� ����
+        for (int idCell = 0; idCell < tableTextCell.TableDateCell.Count && idCell < groupParsing.DateParses.Count; idCell++) // ��������� ����
         {
             TextMeshProUGUI CellDate = tableTextCell.TableDateCell[idCell];
 
-            CellDate.text = groupParsing.dateParses[idCell].dateTime;
+            CellDate.text = groupParsing.DateParses[idCell].dateTime;
         }
         List<int> lessonCells = new();
         bool isUpdate = false;
-        for (int idDate = 0; idDate < tableTextCell.TableLessonCell.Count && idDate < groupParsing.dateParses.Count; idDate++)
+        for (int idDate = 0; idDate < tableTextCell.TableLessonCell.Count && idDate < groupParsing.DateParses.Count; idDate++)
         {
-            lessonCells.Add(groupParsing.dateParses[idDate].Lessons.Count);
-            if (!isUpdate && (tableTextCell.TableLessonCell[idDate].Count != groupParsing.dateParses[idDate].Lessons.Count)) isUpdate = true;
+            lessonCells.Add(groupParsing.DateParses[idDate].Lessons.Count);
+            if (!isUpdate && (tableTextCell.TableLessonCell[idDate].Count != groupParsing.DateParses[idDate].Lessons.Count)) isUpdate = true;
             
         }
         
@@ -105,17 +105,12 @@ public class FormingTabelDate : MonoBehaviour
             tableObjectData.UpdateLessonCell(lessonCells);
         }
         MissingStudent = new();
-        for (int idDate = 0, idNColumn = 0; idDate < tableTextCell.TableLessonCell.Count && idDate < groupParsing.dateParses.Count; idDate++) {
-            for (int idColumn = 0; idColumn < groupParsing.dateParses[idDate].Lessons.Count; idColumn++,idNColumn++)
+        for (int idDate = 0, idNColumn = 0; idDate < tableTextCell.TableLessonCell.Count && idDate < groupParsing.DateParses.Count; idDate++) {
+            for (int idColumn = 0; idColumn < groupParsing.DateParses[idDate].Lessons.Count; idColumn++,idNColumn++)
             {
-                tableTextCell.TableLessonCell[idDate][idColumn].text = groupParsing.dateParses[idDate].Lessons[idColumn];
-
-                // for (int idStudent = 0; idStudent<tableTextCell.TableNCell[idNColumn].Count; idStudent++)
-                // {
-                //     CellTextN();
-                // }
+                tableTextCell.TableLessonCell[idDate][idColumn].text = groupParsing.DateParses[idDate].Lessons[idColumn];
                 
-                group.Dates.TryGetValue(groupParsing.dateParses[idDate].dateTime, out Dates date);
+                group.Dates.TryGetValue(groupParsing.DateParses[idDate].dateTime, out Dates date);
                 if (date != null)
                 {
                     List<StudentMissing> studentMissings = date.lessons[idColumn].StudentsMissing;
@@ -127,11 +122,6 @@ public class FormingTabelDate : MonoBehaviour
                             studentMissing.Type ? TypeCellN.valid : TypeCellN.disrespectful);
                     }
                 }
-                /*else
-                {
-                    TypeCellN typeCellN = SerchStudentCell(group, groupParsing, idDate, idColumn, idCell);
-                    CellTextN(tableTextCell.TableCell[idDate][idColumn][idCell], typeCellN);
-                }//����� N*/
             }
             
         }
@@ -196,7 +186,7 @@ public class FormingTabelDate : MonoBehaviour
     {
         date = DateTime.Today.ToString("dd-MM-yyyy");
         lessonID = -1;
-        List<DateParse> dateParses = LastGroupParsing.dateParses;
+        List<DateParse> dateParses = LastGroupParsing.DateParses;
         for (int idDate = 0,idLessonColum = 0; idDate < dateParses.Count; idDate++)
         {
             List<string> lessons = dateParses[idDate].Lessons;
@@ -220,7 +210,7 @@ public class FormingTabelDate : MonoBehaviour
     }
     private List<int> Converter(GroupParsing groupParsing) {
 
-        List<DateParse> dateParses = groupParsing.dateParses;
+        List<DateParse> dateParses = groupParsing.DateParses;
 
         List<int> ConvertingData = new();
 

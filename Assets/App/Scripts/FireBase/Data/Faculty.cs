@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Firebase.Database;
 
 public class Faculty : IFireBaseData
 {
@@ -7,6 +8,11 @@ public class Faculty : IFireBaseData
     public const string Key_NAME = "Name";
     public string Name { get; set; }
     public Dictionary<string, Specialization> Specializations = new();
+    public DatabaseReference Reference { get; private set; }
 
+    public Faculty(DatabaseReference facultyReference)
+    {
+        Reference = facultyReference;
+    }
 }
  
