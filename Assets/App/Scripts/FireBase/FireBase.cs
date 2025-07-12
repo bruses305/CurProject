@@ -122,7 +122,7 @@ public class FireBase
             Name = groupNumber,
         };
 
-        GroupParsing groupParsing = new GroupParsing() { Name = baseGroupLoad };
+        GroupParsing groupParsing = new GroupParsing() { Name = baseGroupLoad,Reference = groupReference};
 
         List<DatabaseReference> studentReferenceList = await GetChildAsync(groupReference, Student.Key);
         
@@ -200,17 +200,16 @@ public class FireBase
                                     ID = Convert.ToInt32(
                                         await ReadValue(studentMissingReference.Child(StudentMissing.Key_ID)))
                                 };
-                                studentMissing.Type = Convert.ToBoolean(
+                                bool valueType = Convert.ToBoolean(
                                     await ReadValue(
                                         studentMissingReference.Child(StudentMissing
                                             .Key_TYPE)));
-                                if (!studentMissing.Type)
-                                {
-                                    studentMissing.Type = FindCertificate(
-                                        group.Students[studentMissing.ID].Certificates,
-                                        DateTime.Parse(dateReference.Key));
-                                    if (studentMissing.Type) await UpdateMissingStudents(studentMissingReference, true);
-                                }
+                                studentMissing.Type = FindCertificate(
+                                    group.Students[studentMissing.ID].Certificates,
+                                    DateTime.Parse(dateReference.Key));
+                                if (studentMissing.Type != valueType)
+                                    await UpdateMissingStudents(studentMissingReference, studentMissing.Type);
+
 
                                 studentsMissing.Add(studentMissing);
                             }
@@ -695,6 +694,17 @@ public class FireBase
         }
 
         return certificatesList;
+    }
+
+    public static async Task DeleteCertificate(DatabaseReference groupReference,int studentID, string dateEnd)
+    {
+        ProgressBar.Progress = 0.5f;
+        Debug.Log(dateEnd);
+        DatabaseReference dateCertificateReference = groupReference.Child(Student.Key).Child("Student" + studentID)
+            .Child(Student.Key_CERTIFICATES).Child(dateEnd).Child(Student.Key_CERTIFICATESSTART);
+        ProgressBar.Progress = 0.7f;
+        await dateCertificateReference.RemoveValueAsync();
+        ProgressBar.Progress = 1f;
     }
     public async Task<bool> IsCreatingDate(string date, DatabaseReference groupReference)
     {

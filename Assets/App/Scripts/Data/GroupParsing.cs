@@ -1,10 +1,11 @@
 using System.Collections.Generic;
-using System.Linq;
+using Firebase.Database;
 
 public class GroupParsing
 {
     public string Name { get; set; }
     public List<DateParse> DateParses = new();
+    public DatabaseReference Reference { get; set; }
 
     public void MergingObjectDate(List<DateParse> dateParses) {
         if (dateParses != null)

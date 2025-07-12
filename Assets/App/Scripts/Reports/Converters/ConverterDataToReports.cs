@@ -43,7 +43,7 @@ public static class ConverterDataToReports
         
         foreach (var student in LastGroup.Students)
         {
-            foreach (var certificate in FireBase.FindCertificate(student.Certificates,Times.StartDayInMonth,false))
+            foreach (var certificate in FireBase.FindCertificate(student.Certificates,Times.StartDayInMonth(SelectedDates.DateStart),false))
             {
                 StudentJustificationDocument document = new()
                 {

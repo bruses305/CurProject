@@ -64,6 +64,7 @@ public static class AttendanceDocFiller
         }
         catch
         {
+            Notification.SendNotificationMessage("убедитесь что файл не открыт",time:2f);
             Debug.LogError("убедитесь что файл не открыт");
         }
     }
